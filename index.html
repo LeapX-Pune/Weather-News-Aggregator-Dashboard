@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header>
+      <h1>Weather Dashboard</h1>
+      <p>Check the weather and latest news in one place.</p>
+    </header>
+
+    <section class="panels">
+      <article class="panel" id="weather-panel">
+        <h2>Weather</h2>
+        <div id="weather-output">Loading weather data...</div>
+      </article>
+
+      <article class="panel" id="news-panel">
+        <h2>News</h2>
+        <div id="news-output">Loading news headlines...</div>
+      </article>
+    </section>
+  </main>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
