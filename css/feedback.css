@@ -1,0 +1,188 @@
+/* feedback.css - Skeleton Loading System */
+
+/* Variables for skeleton theming */
+:root {
+  --skeleton-bg: #e2e8f0;
+  --skeleton-highlight: #f8fafc;
+  --skeleton-radius: 8px;
+  --skeleton-timing: 1.5s;
+}
+
+/* Dark mode support - adjusting based on system preferences and a potential body class */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --skeleton-bg: #334155;
+    --skeleton-highlight: #475569;
+  }
+}
+
+body.dark-mode, body.dark-theme {
+  --skeleton-bg: #334155;
+  --skeleton-highlight: #475569;
+}
+
+/* Shimmer Animation Keyframes */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Base Component for Shimmer Effect */
+.skeleton-base {
+  background-color: var(--skeleton-bg);
+  background-image: linear-gradient(
+    90deg,
+    var(--skeleton-bg) 25%,
+    var(--skeleton-highlight) 50%,
+    var(--skeleton-bg) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer var(--skeleton-timing) infinite linear;
+  border-radius: var(--skeleton-radius);
+}
+
+/* Weather Skeleton Styles */
+.skeleton-weather-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.skeleton-weather-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+}
+
+.skeleton-weather-temp {
+  width: 120px;
+  height: 48px;
+  border-radius: var(--skeleton-radius);
+}
+
+.skeleton-weather-desc {
+  width: 160px;
+  height: 24px;
+  border-radius: var(--skeleton-radius);
+}
+
+.skeleton-weather-details {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 16px;
+  gap: 16px;
+}
+
+.skeleton-weather-detail-item {
+  flex: 1;
+  height: 40px;
+  border-radius: var(--skeleton-radius);
+}
+
+/* News Skeleton Styles */
+.skeleton-news-card {
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (prefers-color-scheme: dark) {
+  .skeleton-news-card {
+    background-color: #1e293b;
+  }
+}
+body.dark-mode .skeleton-news-card, body.dark-theme .skeleton-news-card {
+  background-color: #1e293b;
+}
+
+.skeleton-news-image {
+  width: 100%;
+  height: 200px;
+  border-radius: 0;
+}
+
+.skeleton-news-content {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.skeleton-news-title {
+  width: 90%;
+  height: 24px;
+}
+
+.skeleton-news-title-short {
+  width: 65%;
+  height: 24px;
+}
+
+.skeleton-news-text {
+  width: 100%;
+  height: 16px;
+  margin-top: 8px;
+}
+
+.skeleton-news-text-short {
+  width: 80%;
+  height: 16px;
+}
+
+.skeleton-news-meta {
+  margin-top: auto;
+  padding-top: 16px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.skeleton-news-author {
+  width: 30%;
+  height: 14px;
+}
+
+.skeleton-news-date {
+  width: 25%;
+  height: 14px;
+}
+
+/* Search Loading Skeleton */
+.skeleton-search {
+  width: 100%;
+  height: 48px;
+  border-radius: 24px;
+}
+
+/* Grid Layout for News Dashboard */
+.skeleton-news-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+  width: 100%;
+}
+
+/* Accessibility: Reduced Motion handling */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-base {
+    animation: none;
+    background-image: none;
+    background-color: var(--skeleton-bg);
+    opacity: 0.8;
+  }
+}
