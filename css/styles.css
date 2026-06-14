@@ -383,6 +383,38 @@ input { background: none; border: none; outline: none; font-family: inherit; col
 .n-filter:hover { background: rgba(255,255,255,0.1); }
 .n-filter.active { background: #ffffff; color: #000; font-weight: 500; }
 
+.category-select {
+  padding: 8px 36px 8px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  color: var(--text-main);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  transition: all 0.3s;
+}
+.category-select:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.category-select:focus-visible {
+  outline: 2px solid rgba(255,255,255,0.8);
+  outline-offset: 2px;
+}
+.category-select option {
+  background: #0f1115;
+  color: var(--text-main);
+}
+
+
 .news-grid {
   display: grid;
   grid-template-columns: 1fr;

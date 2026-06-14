@@ -1,6 +1,6 @@
 /** Premium city search — debounce, history, validation, keyboard */
 
-import { debounce } from './utils.js';
+import { debounce, cleanAndValidateQuery } from './utils.js';
 import { getSearchHistory, addSearchHistory, clearSearchHistory } from './storage.js';
 import { getCitySuggestions, validateCity } from './weather.js';
 
@@ -48,8 +48,8 @@ export function initSearch({ onSearch, onInvalid }) {
   }
 
   function performSearch(query) {
-    const trimmed = query.trim();
-    if (!trimmed) {
+    const trimmed = cleanAndValidateQuery(query);
+    if (trimmed === null) {
       onInvalid?.('Please enter a city name.');
       return;
     }
@@ -72,11 +72,12 @@ export function initSearch({ onSearch, onInvalid }) {
 
   // Improved: searches both city name and history simultaneously
   const debouncedSuggest = debounce((query) => {
-    if (!query.trim()) {
+    const trimmed = cleanAndValidateQuery(query);
+    if (trimmed === null) {
       showDropdown(getSearchHistory());
       return;
     }
-    const suggestions = getCitySuggestions(query);
+    const suggestions = getCitySuggestions(trimmed);
     // Show suggestions; if empty, show history as fallback
     showDropdown(suggestions.length ? suggestions : getSearchHistory());
   }, 250);
@@ -89,15 +90,11 @@ export function initSearch({ onSearch, onInvalid }) {
   });
 
   input.addEventListener('focus', () => {
-    const val = input.value.trim();
-    showDropdown(val ? getCitySuggestions(val) : getSearchHistory());
+    const trimmed = cleanAndValidateQuery(input.value);
+    showDropdown(trimmed ? getCitySuggestions(trimmed) : getSearchHistory());
   });
 
   input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      performSearch(input.value);
-    }
     if (e.key === 'Escape') {
       input.value = '';
       input.classList.remove('is-invalid');
@@ -111,7 +108,10 @@ export function initSearch({ onSearch, onInvalid }) {
     }
   });
 
-  searchBtn?.addEventListener('click', () => performSearch(input.value));
+  wrapper?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    performSearch(input.value);
+  });
 
   clearBtn?.addEventListener('click', () => {
     input.value = '';

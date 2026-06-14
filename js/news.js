@@ -48,6 +48,8 @@ const CATEGORY_MAP = {
   technology: (a) => a.category === 'technology',
   business: (a) => a.category === 'business',
   sports: (a) => a.category === 'sports',
+  health: (a) => a.category === 'health',
+  entertainment: (a) => a.category === 'entertainment',
 };
 
 function generateExtraArticles(page) {

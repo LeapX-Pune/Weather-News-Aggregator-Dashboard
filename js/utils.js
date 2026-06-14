@@ -63,3 +63,15 @@ export function sanitize(str) {
   div.textContent = str;
   return div.innerHTML;
 }
+
+/**
+ * Trims whitespace from a query string and validates that it is non-empty.
+ * Returns the trimmed query if valid, or null if the input is empty or invalid.
+ * Used to prevent execution of empty submissions.
+ */
+export function cleanAndValidateQuery(query) {
+  if (typeof query !== 'string') return null;
+  const trimmed = query.trim();
+  return trimmed !== '' ? trimmed : null;
+}
+
