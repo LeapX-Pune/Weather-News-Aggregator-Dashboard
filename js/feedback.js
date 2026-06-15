@@ -285,3 +285,288 @@ if (typeof window !== 'undefined') {
     window.isSkeletonVisible = SkeletonSystem.isSkeletonVisible;
     window.withLoading = SkeletonSystem.withLoading;
 }
+
+/**
+ * Toast Notification System
+ * Reusable, accessible toast notifications for the dashboard.
+ */
+const ToastSystem = (function() {
+    
+    let container = null;
+
+    /**
+     * Initializes the toast container if it doesn't exist
+     */
+    function initContainer() {
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'toast-container';
+            container.setAttribute('aria-live', 'polite');
+            container.setAttribute('aria-atomic', 'true');
+            document.body.appendChild(container);
+        }
+    }
+
+    /**
+     * Get SVG icon based on type
+     */
+    function getIcon(type) {
+        switch(type) {
+            case 'success':
+                return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+            case 'error':
+                return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+            case 'warning':
+                return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`;
+            case 'info':
+            default:
+                return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+        }
+    }
+
+    /**
+     * Shows a toast notification
+     * @param {string} message - The message to display
+     * @param {string} type - 'success', 'error', 'warning', 'info'
+     */
+    function showToast(message, type = 'info') {
+        initContainer();
+
+        const validTypes = ['success', 'error', 'warning', 'info'];
+        const toastType = validTypes.includes(type) ? type : 'info';
+
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${toastType}`;
+        toast.setAttribute('role', 'alert');
+
+        const iconDiv = document.createElement('div');
+        iconDiv.className = 'toast-icon';
+        iconDiv.innerHTML = getIcon(toastType);
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'toast-content';
+        
+        const messageP = document.createElement('p');
+        messageP.className = 'toast-message';
+        messageP.textContent = message;
+        
+        contentDiv.appendChild(messageP);
+
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'toast-close';
+        closeBtn.setAttribute('aria-label', 'Close notification');
+        closeBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+
+        toast.appendChild(iconDiv);
+        toast.appendChild(contentDiv);
+        toast.appendChild(closeBtn);
+
+        container.appendChild(toast);
+
+        // Trigger animation
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                toast.classList.add('show');
+            });
+        });
+
+        // Setup auto dismiss
+        let timeoutId = setTimeout(() => {
+            dismissToast(toast);
+        }, 4000);
+
+        // Handle close button
+        closeBtn.addEventListener('click', () => {
+            clearTimeout(timeoutId);
+            dismissToast(toast);
+        });
+    }
+
+    /**
+     * Dismisses a toast with animation
+     * @param {HTMLElement} toast - The toast element
+     */
+    function dismissToast(toast) {
+        toast.classList.remove('show');
+        toast.classList.add('hide');
+        toast.addEventListener('transitionend', () => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        });
+    }
+
+    return {
+        showToast
+    };
+})();
+
+// Export to global scope
+if (typeof window !== 'undefined') {
+    window.showToast = ToastSystem.showToast;
+}
+
+/**
+ * Error Handling & Fallback UI System
+ * Reusable component for empty states, errors, and permissions.
+ */
+const FallbackSystem = (function() {
+    
+    const ERROR_CONTENT = {
+        'permission_denied': {
+            icon: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon><line x1="2" y1="2" x2="22" y2="22"></line></svg>`,
+            title: "Location Permission Denied",
+            desc: "We need your location to show local weather.",
+            btnText: "Search City",
+            variant: 'warning'
+        },
+        'invalid_city': {
+            icon: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="9" y1="9" x2="13" y2="13"></line><line x1="13" y1="9" x2="9" y2="13"></line></svg>`,
+            title: "City Not Found",
+            desc: "We couldn't find a city matching your search.",
+            btnText: "Try Again",
+            variant: 'error'
+        },
+        'weather_error': {
+            icon: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a5 5 0 1 0-8.6-4.5"></path><path d="M22 22l-4-4"></path><path d="M9.8 11.2A5 5 0 0 0 10 9a7 7 0 1 0 11.8 5"></path></svg>`,
+            title: "Weather Data Unavailable",
+            desc: "Failed to load current weather details.",
+            btnText: "Retry",
+            variant: 'error'
+        },
+        'news_error': {
+            icon: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"></path><line x1="18" y1="14" x2="12" y2="14"></line><line x1="18" y1="10" x2="12" y2="10"></line><line x1="18" y1="6" x2="12" y2="6"></line></svg>`,
+            title: "News Unavailable",
+            desc: "Failed to load the latest headlines.",
+            btnText: "Retry",
+            variant: 'error'
+        },
+        'network_offline': {
+            icon: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path><path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>`,
+            title: "You're Offline",
+            desc: "Please check your internet connection.",
+            btnText: "Retry Connection",
+            variant: 'warning'
+        },
+        'empty_news': {
+            icon: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="15"></line><line x1="15" y1="9" x2="9" y2="15"></line></svg>`,
+            title: "No News Found",
+            desc: "We couldn't find any articles for this category.",
+            btnText: "Clear Filters",
+            variant: 'warning'
+        }
+    };
+
+    /**
+     * Resolves the target container safely
+     * @param {HTMLElement|string} target - The DOM element or CSS selector
+     * @returns {HTMLElement|null} The resolved DOM element or null
+     */
+    function resolveContainer(target) {
+        if (!target) return null;
+        try {
+            return typeof target === 'string' ? document.querySelector(target) : target;
+        } catch (e) {
+            console.warn(`[FallbackSystem] Invalid selector provided: ${target}`, e);
+            return null;
+        }
+    }
+
+    /**
+     * Internal function to render a custom fallback UI
+     * @param {HTMLElement|string} target - Container element
+     * @param {Object} options - Fallback configuration
+     */
+    function showFallback(target, options = {}) {
+        const container = resolveContainer(target);
+        if (!container) return;
+
+        const {
+            title = 'Error',
+            desc = 'Something went wrong.',
+            icon = '',
+            btnText = 'Retry',
+            variant = 'error',
+            onRetry = null
+        } = options;
+
+        const fallbackEl = document.createElement('div');
+        fallbackEl.className = `fallback-container fallback-${variant}`;
+        fallbackEl.setAttribute('role', 'alert');
+        fallbackEl.setAttribute('aria-live', 'assertive');
+        fallbackEl.setAttribute('data-fallback-wrapper', 'true');
+
+        const iconEl = document.createElement('div');
+        iconEl.className = 'fallback-icon';
+        iconEl.innerHTML = icon;
+
+        const titleEl = document.createElement('h3');
+        titleEl.className = 'fallback-title';
+        titleEl.textContent = title;
+
+        const descEl = document.createElement('p');
+        descEl.className = 'fallback-desc';
+        descEl.textContent = desc;
+
+        fallbackEl.appendChild(iconEl);
+        fallbackEl.appendChild(titleEl);
+        fallbackEl.appendChild(descEl);
+
+        if (onRetry && typeof onRetry === 'function') {
+            const btnEl = document.createElement('button');
+            btnEl.className = 'fallback-btn';
+            btnEl.innerHTML = `${btnText}`;
+            btnEl.addEventListener('click', onRetry);
+            fallbackEl.appendChild(btnEl);
+        }
+
+        container.innerHTML = '';
+        container.appendChild(fallbackEl);
+    }
+
+    /**
+     * Pre-configured error displays
+     * @param {HTMLElement|string} target - Container element
+     * @param {string} type - Preset error type
+     * @param {Function} onRetry - Callback function for the retry button
+     */
+    function showError(target, type, onRetry) {
+        if (!ERROR_CONTENT[type]) {
+            console.warn(`[FallbackSystem] Unknown error type: "${type}". Falling back to 'weather_error'.`);
+            type = 'weather_error';
+        }
+        
+        const content = ERROR_CONTENT[type];
+        showFallback(target, {
+            ...content,
+            onRetry
+        });
+    }
+
+    /**
+     * Removes the fallback UI safely from a container
+     * @param {HTMLElement|string} target - Container element
+     */
+    function hideError(target) {
+        const container = resolveContainer(target);
+        if (!container) return;
+
+        const fallbacks = container.querySelectorAll('[data-fallback-wrapper="true"]');
+        fallbacks.forEach(el => {
+            if (el.parentNode) el.parentNode.removeChild(el);
+        });
+    }
+
+    return {
+        showError,
+        hideError,
+        showFallback
+    };
+})();
+
+// Export to global scope
+if (typeof window !== 'undefined') {
+    window.showError = FallbackSystem.showError;
+    window.hideError = FallbackSystem.hideError;
+    window.showFallback = FallbackSystem.showFallback;
+}
