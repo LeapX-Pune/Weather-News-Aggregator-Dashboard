@@ -488,3 +488,218 @@ body.dark-mode .fallback-warning .fallback-icon, body.dark-theme .fallback-warni
   background-color: rgba(245, 158, 11, 0.15);
   color: #fbbf24;
 }
+
+/* Full Page App Startup Loader */
+.app-startup-loader {
+  position: fixed;
+  inset: 0;
+  background-color: #050505;
+  background-image: radial-gradient(circle at center, #1e293b 0%, #050505 100%);
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.app-startup-loader.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: all;
+}
+
+.app-startup-loader.hide {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.app-startup-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+}
+
+.app-startup-brand {
+  font-family: 'Outfit', sans-serif;
+  font-size: 3.5rem;
+  font-weight: 500;
+  color: #ffffff;
+  letter-spacing: 4px;
+  animation: startup-pulse 2.5s infinite ease-in-out;
+  text-align: center;
+}
+
+@keyframes startup-pulse {
+  0%, 100% {
+    opacity: 0.8;
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 1;
+    text-shadow: 0 0 30px rgba(56, 189, 248, 0.5);
+    transform: scale(1.02);
+  }
+}
+
+.app-startup-text {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.1rem;
+  color: #94a3b8;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  animation: startup-fade-in 0.8s ease-out forwards;
+  opacity: 0;
+  transform: translateY(10px);
+  animation-delay: 0.2s;
+}
+
+@keyframes startup-fade-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.app-startup-progress-wrapper {
+  width: 240px;
+  height: 2px;
+  background-color: rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+  border-radius: 2px;
+  animation: startup-fade-in 0.8s ease-out forwards;
+  opacity: 0;
+  transform: translateY(10px);
+  animation-delay: 0.4s;
+}
+
+.app-startup-progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, #38bdf8, transparent);
+  animation: startup-progress 1.5s infinite linear;
+}
+
+@keyframes startup-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+@media (max-width: 768px) {
+  .app-startup-brand {
+    font-size: 2.5rem;
+  }
+  .app-startup-progress-wrapper {
+    width: 200px;
+  }
+}
+
+/* Offline Detection & Retry System */
+.feedback-offline-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: #ef4444; /* red-500 */
+  color: #ffffff;
+  z-index: 100000;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transform: translateY(-100%);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  box-sizing: border-box;
+}
+
+.feedback-offline-banner.visible {
+  transform: translateY(0);
+}
+
+.feedback-offline-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.network-retry-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 6px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  margin-left: 12px;
+}
+
+.network-retry-btn:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.network-retry-btn:active {
+  transform: scale(0.96);
+}
+
+.network-retry-btn:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.network-retry-btn.loading svg {
+  animation: network-spin 1s linear infinite;
+}
+
+@keyframes network-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Accessibility: Reduced Motion handling for new components */
+@media (prefers-reduced-motion: reduce) {
+  .toast,
+  .fallback-container,
+  .app-startup-loader,
+  .feedback-offline-banner {
+    transition: none !important;
+    animation: none !important;
+  }
+  
+  .app-startup-brand,
+  .app-startup-text,
+  .app-startup-progress-wrapper,
+  .app-startup-progress-bar,
+  .network-retry-btn.loading svg {
+    animation: none !important;
+  }
+}
