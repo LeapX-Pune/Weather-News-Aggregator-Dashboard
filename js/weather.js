@@ -1,39 +1,46 @@
-/**
- * @file weather.js
- * @description Fetches live real-time weather conditions from WeatherAPI.com
- */
+function getApiKey() {
+  return window.WEATHER_API_KEY || '';
+}
 
-/**
- * Fetches current weather information using coordinates or city name from the location data object.
- * @param {Object} locationData - Contains { lat, lon, city, countryCode }
- * @returns {Promise<Object>} Cleaned weather data structure for the UI module
- */
+function generateMockWeather(locationData) {
+  const city = locationData?.city || 'New York';
+  return {
+    location: city,
+    temperature: Math.round(15 + Math.random() * 15),
+    description: ['Sunny', 'Partly cloudy', 'Cloudy', 'Light rain', 'Clear'][Math.floor(Math.random() * 5)],
+    humidity: Math.round(40 + Math.random() * 40),
+  };
+}
+
 export async function fetchWeather(locationData) {
-  // 1. Fallback security check in case location object is missing details
-  const queryParam = locationData.city ? locationData.city : `${locationData.lat},${locationData.lon}`;
+  const key = getApiKey();
+  if (!key) {
+    console.log('Weather Service: No API key set. Using mock data.');
+    return generateMockWeather(locationData);
+  }
 
-  // 2. Build the live WeatherAPI.com URL using your global window key
-  const url = `https://api.weatherapi.com/v1/current.json?key=${window.WEATHER_API_KEY}&q=${encodeURIComponent(queryParam)}`;
+  const queryParam = locationData.city ? locationData.city : `${locationData.lat},${locationData.lon}`;
+  const url = `https://api.weatherapi.com/v1/current.json?key=${key}&q=${encodeURIComponent(queryParam)}`;
 
   console.log(`Weather Service: Fetching live data for query: "${queryParam}"`);
 
-  // 3. Make the actual network call to the API
   const response = await fetch(url);
 
   if (!response.ok) {
-    throw new Error(`Weather API Error: ${response.status} - Unable to fetch current weather.`);
+    console.warn(`Weather Service: API returned ${response.status}. Falling back to mock data.`);
+    return generateMockWeather(locationData);
   }
 
   const data = await response.json();
 
-  // 4. Map the API response fields to match what your js/ui.js module expects to print
   return {
     location: data.location.name,
-    temperature: Math.round(data.current.temp_c), // Standardizes to Celsius integer
-    description: data.current.condition.text,    // e.g., "Sunny", "Partly cloudy"
-    humidity: data.current.humidity
+    temperature: Math.round(data.current.temp_c),
+    description: data.current.condition.text,
+    humidity: data.current.humidity,
   };
 }
+<<<<<<< Updated upstream
 /** Weather data layer — static fixture generation for UI shell */
 
 const VALID_CITIES = {
@@ -212,3 +219,5 @@ export function getCitySuggestions(query) {
 
   return results;
 }
+=======
+>>>>>>> Stashed changes
