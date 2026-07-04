@@ -45,19 +45,6 @@ export function prefersReducedMotion() {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-export function createAbortable(delay = 600) {
-  let timeoutId;
-  const promise = new Promise((resolve, reject) => {
-    timeoutId = setTimeout(resolve, delay);
-  });
-  return {
-    promise,
-    abort: () => {
-      clearTimeout(timeoutId);
-    },
-  };
-}
-
 export function sanitize(str) {
   const div = document.createElement('div');
   div.textContent = str;

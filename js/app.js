@@ -1,165 +1,50 @@
-/** WeatherWise — main application orchestrator */
+/** WeatherWise — UI-only dashboard shell */
 
-import { fetchWeather, fetchWeatherByCoords, cancelWeatherFetch } from './weather.js';
-import { fetchNews, getTickerHeadlines, cancelNewsFetch } from './news.js';
+import { getWeatherFixture } from './weather.js';
+import { getNewsFixture, getTickerHeadlines } from './news.js';
 import {
   showLoader, showToast, showSuccessToast, updateConnectionStatus,
   initClock, renderWeather, renderTicker, renderFeatured,
   renderNewsGrid, renderNewsSkeleton, updateFilterButtons,
-  initBackToTop, initPullToRefresh, setWeatherRefreshing,
+  initBackToTop, setWeatherRefreshing,
 } from './ui.js';
 import { initSearch } from './search.js';
-import { initNetwork, onNetworkChange, isOnline } from './network.js';
-import { getLastCity, setLastCity, getNewsCategory, setNewsCategory, saveScrollPosition, getScrollPosition } from './storage.js';
 import { prefersReducedMotion } from './utils.js';
 
-const WEATHER_REFRESH_MS = 10 * 60 * 1000;
+let currentCategory = 'all';
 
-let currentCity = getLastCity();
-let currentCategory = getNewsCategory();
-let newsPage = 1;
-let allArticles = [];
-let isLoadingNews = false;
-let hasMoreNews = true;
-let weatherRefreshTimer = null;
-let searchApi = null;
-
-// Track in-flight network recovery to prevent duplicate requests
-let isRecovering = false;
-
-async function loadWeather(city, { force = false, silent = false } = {}) {
-  if (!silent) setWeatherRefreshing(true);
-  try {
-    const data = await fetchWeather(city, { force });
-    renderWeather(data);
-    setLastCity(city);
-    currentCity = city;
-    if (force && !silent) showSuccessToast(`Weather updated for ${data.location.display}`);
-    return data;
-  } catch (err) {
-    if (err.name !== 'AbortError') showToast(err.message);
-    throw err;
-  } finally {
-    setWeatherRefreshing(false);
-  }
+function loadWeather(city) {
+  const data = getWeatherFixture(city);
+  renderWeather(data);
+  return data;
 }
 
-async function loadNews({ category = currentCategory, page = 1, append = false, force = false } = {}) {
-  if (isLoadingNews) return;
-  isLoadingNews = true;
-
-  if (!append) renderNewsSkeleton();
-
-  try {
-    const { articles, hasMore } = await fetchNews({ category, page, force });
-    hasMoreNews = hasMore;
-
-    if (append) {
-      allArticles = [...allArticles, ...articles];
-    } else {
-      allArticles = articles;
-    }
-
-    renderNewsGrid(articles, { append, animate: !append });
-    updateFilterButtons(category);
-
-    if (page === 1) {
-      renderTicker(getTickerHeadlines(allArticles));
-      const featured = allArticles.find((a) => a.breaking) || allArticles[0];
-      renderFeatured(featured);
-    }
-
-    newsPage = page;
-    currentCategory = category;
-    setNewsCategory(category);
-  } catch (err) {
-    if (err.name !== 'AbortError') showToast(err.message);
-  } finally {
-    isLoadingNews = false;
-  }
+function loadNews({ category = 'all' } = {}) {
+  renderNewsSkeleton();
+  const { articles } = getNewsFixture({ category });
+  renderNewsGrid(articles, { append: false, animate: true });
+  renderTicker(getTickerHeadlines(articles));
+  renderFeatured(articles[0]);
+  updateFilterButtons(category);
+  currentCategory = category;
 }
 
 function handleSearch(city, done) {
-  loadWeather(city, { force: true })
-    .catch(() => {})
-    .finally(() => done?.());
+  loadWeather(city);
+  showSuccessToast(`Weather updated for ${city}`);
+  done?.();
 }
 
 function handleInvalidSearch(msg) {
   showToast(msg);
 }
 
-async function handleGeolocation() {
-  if (!navigator.geolocation) {
-    showToast('Geolocation is not supported by your browser.');
-    return;
-  }
-
-  showLoader(true);
-  navigator.geolocation.getCurrentPosition(
-    async (pos) => {
-      try {
-        const data = await fetchWeatherByCoords(pos.coords.latitude, pos.coords.longitude);
-        renderWeather(data);
-        // FIX: Update currentCity so the refresh timer uses the GPS location
-        currentCity = data.location.city;
-        setLastCity(currentCity);
-        showSuccessToast('Location updated from GPS');
-      } catch (err) {
-        showToast(err.message);
-      } finally {
-        showLoader(false);
-      }
-    },
-    () => {
-      showLoader(false);
-      showToast('Unable to retrieve your location. Please check permissions.');
-    },
-    { timeout: 10000, enableHighAccuracy: false }
-  );
-}
-
 function initCategoryFilters() {
-  document.querySelectorAll('.n-filter').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const category = btn.dataset.category || 'all';
-      newsPage = 1;
-      hasMoreNews = true;
-      loadNews({ category, page: 1 });
-    });
-  });
-
   const select = document.getElementById('news-category-select');
   select?.addEventListener('change', (e) => {
     const category = e.target.value || 'all';
-    newsPage = 1;
-    hasMoreNews = true;
-    loadNews({ category, page: 1 });
+    loadNews({ category });
   });
-}
-
-function initInfiniteScroll() {
-  const sentinel = document.getElementById('news-sentinel');
-  if (!sentinel || !('IntersectionObserver' in window)) return;
-
-  const observer = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting && hasMoreNews && !isLoadingNews) {
-      loadNews({ category: currentCategory, page: newsPage + 1, append: true });
-    }
-  }, { rootMargin: '200px' });
-
-  observer.observe(sentinel);
-}
-
-function initWeatherRefresh() {
-  const btn = document.getElementById('weather-refresh-btn');
-  btn?.addEventListener('click', () => loadWeather(currentCity, { force: true }));
-
-  // Ensure only one timer ever runs
-  if (weatherRefreshTimer) clearInterval(weatherRefreshTimer);
-  weatherRefreshTimer = setInterval(() => {
-    if (isOnline()) loadWeather(currentCity, { force: true, silent: true });
-  }, WEATHER_REFRESH_MS);
 }
 
 function initKeyboardShortcuts() {
@@ -178,85 +63,41 @@ function initKeyboardShortcuts() {
   });
 }
 
-function initScrollRestoration() {
-  const savedY = getScrollPosition();
-  if (savedY > 0) {
-    requestAnimationFrame(() => window.scrollTo(0, savedY));
-  }
+let searchApi;
 
-  let scrollTimer;
-  window.addEventListener('scroll', () => {
-    clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(() => saveScrollPosition(window.scrollY), 200);
-  }, { passive: true });
-}
-
-function initNetworkRecovery() {
-  onNetworkChange(async ({ online }) => {
-    updateConnectionStatus({ online, health: online ? 'healthy' : 'offline' });
-    if (online) {
-      // FIX: Guard against concurrent recovery attempts and race with isLoadingNews
-      if (isRecovering) return;
-      isRecovering = true;
-      showSuccessToast('Connection restored. Syncing data...');
-      try {
-        await Promise.allSettled([
-          loadWeather(currentCity, { force: true, silent: true }),
-          loadNews({ category: currentCategory, force: true }),
-        ]);
-      } finally {
-        isRecovering = false;
-      }
-    }
-  });
-}
-
-async function init() {
-  initNetwork();
+function init() {
   initClock();
   initBackToTop();
-  initScrollRestoration();
   initKeyboardShortcuts();
   initCategoryFilters();
-  initInfiniteScroll();
-  initWeatherRefresh();
 
-  updateConnectionStatus({ online: isOnline(), health: 'healthy' });
-  initNetworkRecovery();
+  document.getElementById('weather-refresh-btn')?.addEventListener('click', () => {
+    setWeatherRefreshing(true);
+    setTimeout(() => {
+      loadWeather('Brooklyn');
+      setWeatherRefreshing(false);
+      showSuccessToast('Weather refreshed');
+    }, 400);
+  });
+
+  document.getElementById('geolocate-btn')?.addEventListener('click', () => {
+    showToast('Use the search bar to find a city.');
+  });
 
   searchApi = initSearch({ onSearch: handleSearch, onInvalid: handleInvalidSearch });
 
-  document.getElementById('geolocate-btn')?.addEventListener('click', handleGeolocation);
-
-  initPullToRefresh(async () => {
-    showLoader(true);
-    await Promise.allSettled([
-      loadWeather(currentCity, { force: true, silent: true }),
-      loadNews({ category: currentCategory, force: true }),
-    ]);
-    showLoader(false);
-    showSuccessToast('Content refreshed');
-  });
+  updateConnectionStatus({ online: true, health: 'healthy' });
 
   showLoader(true);
-  try {
-    await Promise.all([
-      loadWeather(currentCity, { silent: true }),
-      loadNews({ category: currentCategory }),
-    ]);
-  } finally {
+  setTimeout(() => {
+    loadWeather('Brooklyn');
+    loadNews({ category: 'all' });
     showLoader(false);
-  }
 
-  if (!prefersReducedMotion()) {
-    document.body.classList.add('animations-enabled');
-  }
+    if (!prefersReducedMotion()) {
+      document.body.classList.add('animations-enabled');
+    }
+  }, 300);
 }
 
 init();
-
-window.addEventListener('beforeunload', () => {
-  cancelWeatherFetch();
-  cancelNewsFetch();
-  if (weatherRefreshTimer) clearInterval(weatherRefreshTimer);
-});
