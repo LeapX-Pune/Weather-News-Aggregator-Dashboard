@@ -1,8 +1,9 @@
 /** DOM rendering — updates existing UI without redesign */
 
 import { formatDate, formatClock, formatRelativeTime, getGreeting, isRecentArticle, sanitize, prefersReducedMotion } from './utils.js';
-import { getReadArticles, markArticleRead } from './storage.js';
 import { getArticleFallbackImage } from './news.js';
+
+const readArticles = new Set();
 
 const ICON_MAP = {
   sunny: { icon: 'ph-fill ph-sun', color: '#fbbf24' },
@@ -22,26 +23,22 @@ const AMBIENCE_MAP = {
 
 let clockInterval = null;
 
-// Cache the cinematic bg img reference — queried once, not on every weather render
 let _bgImg = null;
 function getBgImg() {
   if (!_bgImg) _bgImg = document.querySelector('.cinematic-bg img');
   return _bgImg;
 }
 
-// Singleton lazy-image IntersectionObserver — created once, reused across renders
 let _lazyObserver = null;
 function getLazyObserver() {
   if (_lazyObserver) return _lazyObserver;
   if (!('IntersectionObserver' in window)) return null;
-
   _lazyObserver = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (entry.isIntersecting) {
         const img = entry.target;
         img.addEventListener('load', () => img.classList.add('loaded'), { once: true });
         img.addEventListener('error', () => {
-          // Fallback: use category fallback if image fails to load
           const card = img.closest('[data-category]');
           const category = card?.dataset.category || 'default';
           img.src = getArticleFallbackImage(category);
@@ -52,7 +49,6 @@ function getLazyObserver() {
       }
     });
   }, { rootMargin: '150px' });
-
   return _lazyObserver;
 }
 
@@ -68,7 +64,6 @@ export function showToast(message, type = 'error') {
   const span = toast.querySelector('span');
   const icon = toast.querySelector('i');
   if (span) span.textContent = message;
-  // Fix: update icon class based on toast type (was always showing error icon)
   if (icon) {
     icon.className = type === 'success'
       ? 'ph-fill ph-check-circle'
@@ -132,7 +127,7 @@ export function renderWeather(data) {
   const lastUpdated = document.getElementById('weather-last-updated');
   const syncTime = document.getElementById('sync-timestamp');
   const ambience = document.getElementById('weather-ambience');
-  const bgImg = getBgImg(); // use cached reference — no repeated querySelector
+  const bgImg = getBgImg();
 
   if (loc) loc.textContent = data.location.display;
   if (temp) temp.innerHTML = `${Math.round(data.current.temp)}&deg;`;
@@ -167,7 +162,6 @@ export function renderWeather(data) {
     ambience.classList.add(AMBIENCE_MAP[data.current.icon] || 'ambience-sunny');
   }
 
-  // Apply bg filter — set transition only once to avoid style thrashing
   if (bgImg && !prefersReducedMotion()) {
     if (!bgImg.dataset.transitionSet) {
       bgImg.style.transition = 'filter 0.5s ease';
@@ -208,7 +202,7 @@ export function renderTicker(headlines) {
   if (!wrapper || !headlines.length) return;
 
   wrapper.innerHTML = headlines.map((text, i) =>
-    `<h4 class="ticker-item t-${i + 1}" role="marquee">${sanitize(text)}</h4>`
+    `<h4 class="ticker-item t-${i + 1}">${sanitize(text)}</h4>`
   ).join('');
   wrapper.setAttribute('aria-live', 'polite');
 }
@@ -217,7 +211,6 @@ export function renderFeatured(article) {
   const card = document.getElementById('featured-news');
   if (!card || !article) return;
 
-  // Ensure fallback image — never empty src
   const imgSrc = article.image || getArticleFallbackImage(article.category);
   const fallbackSrc = getArticleFallbackImage(article.category || 'default');
 
@@ -235,7 +228,6 @@ export function renderFeatured(article) {
 }
 
 function buildNewsCard(article, readSet) {
-  // readSet is pre-loaded once per batch — no per-card localStorage reads
   const isRead = readSet.has(article.id);
   const isNew = isRecentArticle(article.publishedAt);
   const badges = [
@@ -243,7 +235,6 @@ function buildNewsCard(article, readSet) {
     isNew ? '<span class="nc-badge nc-badge-new">New</span>' : '',
   ].filter(Boolean).join('');
 
-  // Ensure fallback image — never an empty src attribute
   const imgSrc = article.image || getArticleFallbackImage(article.category);
   const fallbackSrc = getArticleFallbackImage(article.category || 'default');
 
@@ -282,10 +273,7 @@ export function renderNewsGrid(articles, { append = false, animate = true } = {}
   const grid = document.getElementById('news-grid');
   if (!grid) return;
 
-  // Read localStorage ONCE for the entire batch — not 12 separate reads
-  const readSet = new Set(getReadArticles());
-
-  const html = articles.map((a) => buildNewsCard(a, readSet)).join('');
+  const html = articles.map((a) => buildNewsCard(a, readArticles)).join('');
 
   if (append) {
     grid.insertAdjacentHTML('beforeend', html);
@@ -307,7 +295,7 @@ function bindNewsCardEvents(grid) {
   grid.querySelectorAll('.news-card:not([data-bound])').forEach((card) => {
     card.dataset.bound = 'true';
     card.addEventListener('click', () => {
-      markArticleRead(card.dataset.id);
+      readArticles.add(card.dataset.id);
       card.classList.add('is-read');
     });
     card.addEventListener('keydown', (e) => {
@@ -319,12 +307,13 @@ function bindNewsCardEvents(grid) {
   });
 }
 
+export { readArticles };
+
 function observeLazyImages(container) {
   const observer = getLazyObserver();
   const images = container.querySelectorAll('.nc-img-lazy:not(.loaded)');
 
   if (!observer) {
-    // Fallback for browsers without IntersectionObserver
     images.forEach((img) => {
       img.classList.add('loaded');
       img.addEventListener('error', () => {
@@ -362,39 +351,6 @@ export function initBackToTop() {
   btn.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
   });
-}
-
-export function initPullToRefresh(onRefresh) {
-  let startY = 0;
-  let pulling = false;
-  const indicator = document.getElementById('pull-refresh');
-  if (!indicator) return;
-
-  document.addEventListener('touchstart', (e) => {
-    if (window.scrollY === 0) {
-      startY = e.touches[0].clientY;
-      pulling = true;
-    }
-  }, { passive: true });
-
-  document.addEventListener('touchmove', (e) => {
-    if (!pulling || window.scrollY > 0) return;
-    const diff = e.touches[0].clientY - startY;
-    if (diff > 0 && diff < 120) {
-      indicator.style.transform = `translateY(${Math.min(diff, 80)}px)`;
-      indicator.classList.add('active');
-    }
-  }, { passive: true });
-
-  document.addEventListener('touchend', async () => {
-    if (!pulling) return;
-    pulling = false;
-    const transform = indicator.style.transform;
-    const pulled = parseInt(transform.replace(/\D/g, ''), 10) || 0;
-    indicator.style.transform = '';
-    indicator.classList.remove('active');
-    if (pulled > 60) await onRefresh?.();
-  }, { passive: true });
 }
 
 export function setWeatherRefreshing(isRefreshing) {

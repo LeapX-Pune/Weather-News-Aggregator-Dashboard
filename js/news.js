@@ -1,9 +1,5 @@
-/** News data layer — mock API with categories, pagination, cache */
+/** News data layer — static fixture articles for UI shell */
 
-import { getCache, setCache, TTL } from './cache.js';
-import { withRetry } from './network.js';
-
-// Category-specific fallback images from Unsplash (pre-sized, no auth needed)
 export const CATEGORY_FALLBACKS = {
   technology: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=70',
   business:   'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=600&q=70',
@@ -34,15 +30,6 @@ const BASE_ARTICLES = [
   { id: 'n12', title: 'New Exoplanet Discovered in Habitable Zone', excerpt: 'Astronomers have identified an Earth-sized planet orbiting a nearby star, showing signs of an atmosphere...', category: 'science', source: 'NatGeo', image: 'https://images.unsplash.com/photo-1478737270239-2f02b77fc618?auto=format&fit=crop&w=600&q=70', publishedAt: new Date(Date.now() - 120 * 3600000).toISOString() },
 ];
 
-const EXTRA_TITLES = [
-  { title: 'Quantum Computing Milestone Achieved', category: 'technology', source: 'MIT Review' },
-  { title: 'Major Trade Agreement Signed', category: 'business', source: 'Financial Times' },
-  { title: 'Olympic Records Shattered', category: 'sports', source: 'BBC Sport' },
-  { title: 'Climate Summit Reaches Consensus', category: 'environment', source: 'The Guardian' },
-  { title: 'Breakthrough in Cancer Treatment', category: 'health', source: 'Nature' },
-  { title: 'Streaming Platform Hits 100M Users', category: 'entertainment', source: 'Hollywood Reporter' },
-];
-
 const CATEGORY_MAP = {
   all: () => true,
   technology: (a) => a.category === 'technology',
@@ -52,72 +39,14 @@ const CATEGORY_MAP = {
   entertainment: (a) => a.category === 'entertainment',
 };
 
-function generateExtraArticles(page) {
-  return EXTRA_TITLES.map((item, i) => {
-    const id = `extra_${page}_${i}`;
-    const hoursAgo = (page * 6 + i + 1) * 24;
-    return {
-      id,
-      title: item.title,
-      excerpt: `Latest developments in ${item.category} as reported by ${item.source}. Industry experts weigh in on the implications...`,
-      category: item.category,
-      source: item.source,
-      // Use category fallback — never null image
-      image: getArticleFallbackImage(item.category),
-      publishedAt: new Date(Date.now() - hoursAgo * 3600000).toISOString(),
-      url: '#',
-    };
-  });
-}
+export function getNewsFixture({ category = 'all' } = {}) {
+  const filter = CATEGORY_MAP[category] || CATEGORY_MAP.all;
+  const articles = BASE_ARTICLES.filter(filter).map((a) => ({
+    ...a,
+    image: a.image || getArticleFallbackImage(a.category),
+  }));
 
-let activeController = null;
-
-export async function fetchNews({ category = 'all', page = 1, force = false } = {}) {
-  const cacheKey = `news_${category}_p${page}`;
-  if (!force) {
-    const cached = getCache(cacheKey);
-    if (cached) return cached;
-  }
-
-  if (activeController) activeController.abort();
-  activeController = new AbortController();
-  const signal = activeController.signal;
-
-  const result = await withRetry(async () => {
-    await new Promise((resolve, reject) => {
-      if (signal.aborted) return reject(new DOMException('Aborted', 'AbortError'));
-      const timer = setTimeout(resolve, 400 + Math.random() * 300);
-      signal.addEventListener('abort', () => {
-        clearTimeout(timer);
-        reject(new DOMException('Aborted', 'AbortError'));
-      }, { once: true }); // { once: true } prevents listener accumulation
-    });
-
-    if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
-
-    const filter = CATEGORY_MAP[category] || CATEGORY_MAP.all;
-    let articles = page === 1
-      ? BASE_ARTICLES.filter(filter)
-      : generateExtraArticles(page).filter(filter);
-
-    // Ensure every article has a valid image (never null/undefined)
-    articles = articles.map((a) => ({
-      ...a,
-      image: a.image || getArticleFallbackImage(a.category),
-    }));
-
-    const response = {
-      articles,
-      page,
-      hasMore: page < 4,
-      total: articles.length,
-    };
-
-    setCache(cacheKey, response, TTL.NEWS);
-    return response;
-  });
-
-  return result;
+  return { articles, category, total: articles.length };
 }
 
 export function getTickerHeadlines(articles) {
@@ -125,11 +54,4 @@ export function getTickerHeadlines(articles) {
     .filter((a) => a.breaking || a.category === 'business')
     .slice(0, 3)
     .map((a) => `${a.title}...`);
-}
-
-export function cancelNewsFetch() {
-  if (activeController) {
-    activeController.abort();
-    activeController = null;
-  }
 }

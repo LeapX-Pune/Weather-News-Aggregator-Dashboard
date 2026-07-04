@@ -1,8 +1,23 @@
-/** Premium city search — debounce, history, validation, keyboard */
+/** City search — dropdown, validation, keyboard, in-memory history */
 
 import { debounce, cleanAndValidateQuery } from './utils.js';
-import { getSearchHistory, addSearchHistory, clearSearchHistory } from './storage.js';
 import { getCitySuggestions, validateCity } from './weather.js';
+
+const searchHistory = [];
+const MAX_HISTORY = 8;
+
+function addSearchHistory(city) {
+  const normalized = city.trim();
+  if (!normalized) return;
+  const filtered = searchHistory.filter((h) => h.toLowerCase() !== normalized.toLowerCase());
+  searchHistory.length = 0;
+  searchHistory.push(normalized, ...filtered);
+  if (searchHistory.length > MAX_HISTORY) searchHistory.length = MAX_HISTORY;
+}
+
+function clearSearchHistory() {
+  searchHistory.length = 0;
+}
 
 export function initSearch({ onSearch, onInvalid }) {
   const input = document.getElementById('city-search');
@@ -14,7 +29,6 @@ export function initSearch({ onSearch, onInvalid }) {
   if (!input) return {};
 
   let isSearching = false;
-  // Track document click listener so we add it only once
   let _docClickBound = false;
 
   function setLoading(loading) {
@@ -35,7 +49,6 @@ export function initSearch({ onSearch, onInvalid }) {
     dropdown.hidden = false;
     input.setAttribute('aria-expanded', 'true');
 
-    // Show items with clear history button only when items exist
     dropdown.innerHTML = items.map((city) =>
       `<button type="button" class="search-suggestion" role="option" data-city="${city}">${city}</button>`
     ).join('') +
@@ -58,7 +71,7 @@ export function initSearch({ onSearch, onInvalid }) {
     if (!valid) {
       input.classList.add('is-invalid');
       input.setAttribute('aria-invalid', 'true');
-      onInvalid?.('Location not found. Try: Mumbai, Pune, Delhi, London, Tokyo…');
+      onInvalid?.('Location not found. Try: Mumbai, Pune, Delhi, London, Tokyo\u2026');
       return;
     }
 
@@ -70,16 +83,14 @@ export function initSearch({ onSearch, onInvalid }) {
     onSearch(valid.city, () => setLoading(false));
   }
 
-  // Improved: searches both city name and history simultaneously
   const debouncedSuggest = debounce((query) => {
     const trimmed = cleanAndValidateQuery(query);
     if (trimmed === null) {
-      showDropdown(getSearchHistory());
+      showDropdown([...searchHistory]);
       return;
     }
     const suggestions = getCitySuggestions(trimmed);
-    // Show suggestions; if empty, show history as fallback
-    showDropdown(suggestions.length ? suggestions : getSearchHistory());
+    showDropdown(suggestions.length ? suggestions : [...searchHistory]);
   }, 250);
 
   input.addEventListener('input', () => {
@@ -91,7 +102,7 @@ export function initSearch({ onSearch, onInvalid }) {
 
   input.addEventListener('focus', () => {
     const trimmed = cleanAndValidateQuery(input.value);
-    showDropdown(trimmed ? getCitySuggestions(trimmed) : getSearchHistory());
+    showDropdown(trimmed ? getCitySuggestions(trimmed) : [...searchHistory]);
   });
 
   input.addEventListener('keydown', (e) => {
@@ -134,7 +145,6 @@ export function initSearch({ onSearch, onInvalid }) {
     }
   });
 
-  // Guard: add document click listener only once
   if (!_docClickBound) {
     _docClickBound = true;
     document.addEventListener('click', (e) => {
@@ -146,8 +156,7 @@ export function initSearch({ onSearch, onInvalid }) {
     setLoading,
     focus: () => {
       input.focus();
-      // Show search history on "/" shortcut focus
-      if (!input.value.trim()) showDropdown(getSearchHistory());
+      if (!input.value.trim()) showDropdown([...searchHistory]);
     },
     clear: () => {
       input.value = '';
