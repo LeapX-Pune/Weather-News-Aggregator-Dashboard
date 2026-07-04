@@ -2,35 +2,453 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Weather Dashboard</title>
-  <link rel="stylesheet" href="css/styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="WeatherWise — a cinematic, real-time weather and global news dashboard. Get live weather updates, 7-day forecasts, and trending headlines in one stunning interface.">
+    <meta name="theme-color" content="#050505">
+    <meta property="og:title" content="WeatherWise | Cinematic Dashboard">
+    <meta property="og:description" content="Real-time weather + global news in one cinematic dashboard.">
+    <meta property="og:type" content="website">
+    <title>WeatherWise | Cinematic Dashboard</title>
+    
+    <!-- Preload critical background image for faster LCP -->
+    <link rel="preload" as="image" href="https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&w=1920&q=80" fetchpriority="high">
+    
+    <!-- Elegant Cinematic Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Core Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/feedback.css">
 </head>
 
 <body>
-  <main class="app-shell">
-    <header>
-      <h1>Weather Dashboard</h1>
-      <p>Check the weather and latest news in one place.</p>
-    </header>
 
-    <section class="panels">
-      <article class="panel" id="weather-panel">
-        <h2>Weather</h2>
-        <div id="weather-output">Loading weather data...</div>
-      </article>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
-      <article class="panel" id="news-panel">
-        <h2>News</h2>
-        <div id="news-output">Loading news headlines...</div>
-      </article>
+   
+    <!-- FULL SCREEN CINEMATIC BACKGROUND -->
+    <div class="cinematic-bg">
+        <img src="https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&w=1920&q=80" alt="">
+        <div class="bg-overlay"></div>
+    </div>
+
+    <!-- Weather ambience overlay -->
+    <div id="weather-ambience" class="weather-ambience ambience-sunny" aria-hidden="true"></div>
+
+    <!-- Offline Banner -->
+    <div id="offline-banner" class="offline-banner" aria-hidden="true">
+        <i class="ph-fill ph-wifi-x" aria-hidden="true"></i>
+        <span>You are offline. Showing cached data.</span>
+    </div>
+
+    <!-- Pull to Refresh Indicator -->
+    <div id="pull-refresh" class="pull-refresh" aria-hidden="true">
+        <i class="ph ph-arrow-down" aria-hidden="true"></i>
+        <span>Release to refresh</span>
+    </div>
+
+    <!-- Connection Status -->
+    <div id="connection-status" class="connection-status status-healthy" role="status" aria-label="Connection healthy" title="Connection: healthy"></div>
+
+    <!-- MAIN HERO VIEW (100vh) -->
+    <div class="hero-view">
+        
+        <!-- LEFT SMOKY PANEL -->
+        <aside class="left-panel glass-panel" aria-label="Weather metrics">
+            <div class="brand">
+                <span>WeatherWise</span>
+            </div>
+            
+            <div class="status-card glass-inner">
+                <div class="s-header">
+                    <span class="s-title">Status</span>
+                    <i class="ph ph-warning-circle" aria-hidden="true"></i>
+                </div>
+                <div class="s-main">
+                    <span class="s-val" id="wind-value"><i class="ph ph-wind" style="font-size: 24px; vertical-align: middle;" aria-hidden="true"></i> 24 km/h</span>
+                    <p class="s-desc" id="wind-desc">Dangerous winds</p>
+                    <div class="s-graph">
+                        <svg viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
+                            <path d="M0,35 Q30,35 50,20 T100,5" />
+                            <circle cx="75" cy="12.5" r="3" class="dot" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metrics-list">
+                <div class="m-item glass-inner">
+                    <span class="m-label"><i class="ph ph-drop" aria-hidden="true"></i> Humidity</span>
+                    <span class="m-val" id="metric-humidity">82%</span>
+                </div>
+                <div class="m-item glass-inner">
+                    <span class="m-label"><i class="ph ph-sun" aria-hidden="true"></i> UV Index</span>
+                    <span class="m-val" id="metric-uv">2</span>
+                </div>
+                <div class="m-item glass-inner">
+                    <span class="m-label"><i class="ph ph-thermometer" aria-hidden="true"></i> Feels Like</span>
+                    <span class="m-val" id="metric-feels">15&deg;</span>
+                </div>
+            </div>
+            
+            <div class="condition-display" style="margin-top: 16px; text-align: center; color: var(--text-dim); font-weight: 300; font-size: 14px;">
+                <div id="condition-icon" class="condition-icon-wrap weather-sunny">
+                    <i class="ph-fill ph-sun" style="font-size: 32px; color: #fbbf24;" aria-hidden="true"></i>
+                </div>
+                Current Condition
+            </div>
+        </aside>
+
+        <!-- CENTER STAGE CONTENT -->
+        <main class="main-content" id="main-content">
+            
+            <!-- TOP HEADER -->
+            <header class="top-header">
+                <div class="location-pin">
+                    <i class="ph-fill ph-map-pin" aria-hidden="true"></i>
+                    <div class="location-info">
+                        <span id="greeting-text" class="greeting-text">Good Morning</span>
+                        <div class="location-row">
+                            <span id="location-name">Brooklyn, New York, USA</span>
+                            <span class="date" id="location-date">( Friday, January 4 )</span>
+                        </div>
+                        <span id="live-clock" class="live-clock" aria-live="off">12:00:00 PM</span>
+                    </div>
+                </div>
+                <div class="top-actions">
+                    <button class="btn-icon" id="weather-refresh-btn" type="button" aria-label="Refresh weather" title="Refresh weather">
+                        <i class="ph ph-arrows-clockwise" aria-hidden="true"></i>
+                    </button>
+                    <button class="btn-icon" id="geolocate-btn" type="button" aria-label="Use current location" title="Use Current Location">
+                        <i class="ph ph-crosshair" aria-hidden="true"></i>
+                    </button>
+                    
+                    <form class="search-wrapper" id="search-wrapper" role="search">
+                        <div class="search-bar">
+                            <i class="ph ph-magnifying-glass search-icon" aria-hidden="true"></i>
+                            <label for="city-search" class="visually-hidden">Search city</label>
+                            <input type="text" id="city-search" placeholder="Search city..." autocomplete="off" aria-autocomplete="list" aria-controls="search-dropdown" aria-expanded="false">
+                            <button type="button" id="search-clear" class="search-clear" aria-label="Clear search" tabindex="-1">
+                                <i class="ph ph-x" aria-hidden="true"></i>
+                            </button>
+                            <button type="submit" id="search-btn" class="search-btn" aria-label="Search">
+                                <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+                            </button>
+                            <span class="search-spinner" aria-hidden="true"></span>
+                        </div>
+                        <div id="search-dropdown" class="search-dropdown" role="listbox" hidden></div>
+                    </form>
+                </div>
+                <div class="header-meta">
+                    <span id="weather-last-updated" class="meta-text">Updated just now</span>
+                    <span id="sync-timestamp" class="meta-text">Last sync: --</span>
+                </div>
+            </header>
+
+            <!-- HUGE TYPOGRAPHY -->
+            <section class="center-stage" aria-label="Current weather">
+                <div class="temp-row">
+                    <div class="t-huge" id="current-temp" aria-label="Current temperature">28&deg;</div>
+                    <div class="t-pills">
+                        <div class="t-pill"><span>H</span> <span id="temp-high">32&deg;</span></div>
+                        <div class="t-pill" style="opacity: 0.6;"><span>L</span> <span id="temp-low">19&deg;</span></div>
+                    </div>
+                </div>
+                <div class="condition-huge">
+                    <h1>
+                        <span id="condition-title" style="color: #fbbf24; text-shadow: 0 0 40px rgba(251,191,36,0.3);">Sunny</span><br>
+                        <span id="condition-desc" style="color: #ffffff;">clear skies</span>
+                    </h1>
+                </div>
+            </section>
+
+            <!-- RIGHT WIDGETS -->
+            <div class="right-widgets">
+                <div class="breaking-news-ticker glass-panel" style="padding: 24px; border-radius: 24px; position: relative; overflow: hidden; height: 130px; display: flex; flex-direction: column; justify-content: center;">
+                    <div style="font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; font-weight: 500;">
+                        <span style="width: 8px; height: 8px; background: #f87171; border-radius: 50%; display: inline-block; box-shadow: 0 0 10px #f87171; animation: pulse 2s infinite;" aria-hidden="true"></span> Live Headlines
+                    </div>
+                    
+                    <div class="ticker-wrapper" style="position: relative; height: 45px;" aria-live="polite">
+                        <h4 class="ticker-item t-1">Global Markets Rally Amid Major Tech Sector Growth Worldwide...</h4>
+                        <h4 class="ticker-item t-2">New Renewable Energy Policy Passed By World Leaders...</h4>
+                        <h4 class="ticker-item t-3">Mars Rover Discovers Traces of Ancient Water on Equator...</h4>
+                    </div>
+                </div>
+                
+                <div class="featured-news glass-panel" id="featured-news" style="padding: 16px; border-radius: 24px; display: flex; gap: 16px; align-items: center; cursor: pointer; transition: background 0.3s;" tabindex="0" role="article">
+                    <div style="width: 90px; height: 90px; border-radius: 16px; overflow: hidden; flex-shrink: 0;">
+                        <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=200&q=80" style="width: 100%; height: 100%; object-fit: cover;" alt="" loading="lazy">
+                    </div>
+                    <div style="display: flex; flex-direction: column; justify-content: center;">
+                        <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #38bdf8; font-weight: 500;">Top Story</span>
+                        <h4 style="font-size: 14px; font-weight: 400; line-height: 1.4; margin: 6px 0;">New AI Breakthrough Promises Faster Processing Globally</h4>
+                        <span style="font-size: 11px; color: var(--text-dark);">TechCrunch &bull; 2h ago</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTTOM WAVE FORECAST -->
+            <section class="wave-forecast" aria-label="7-day forecast">
+                <svg class="wave-svg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
+                    <path d="M0,80 Q100,80 166,60 T333,50 T500,40 T666,20 T833,50 T1000,70" />
+                    <line x1="666" y1="20" x2="666" y2="100" />
+                    <circle cx="666" cy="20" r="4" class="dot-glow" />
+                </svg>
+                
+                <div class="wave-days" id="wave-days">
+                    <div class="w-day-col">
+                        <span class="w-name">Sunday</span>
+                        <span class="w-temp" style="margin-top: 40px;">28&deg;</span>
+                    </div>
+                    <div class="w-day-col">
+                        <span class="w-name">Monday</span>
+                        <span class="w-temp" style="margin-top: 30px;">26&deg;</span>
+                    </div>
+                    <div class="w-day-col">
+                        <span class="w-name">Tuesday</span>
+                        <span class="w-temp" style="margin-top: 25px;">27&deg;</span>
+                    </div>
+                    <div class="w-day-col" style="transform: translateY(-20px);">
+                        <span class="w-name" style="color: #ffffff; font-weight: 500;">Wednesday</span>
+                        <span class="w-temp active">23&deg;</span>
+                    </div>
+                    <div class="w-day-col">
+                        <span class="w-name">Thursday</span>
+                        <span class="w-temp" style="margin-top: 20px;">30&deg;</span>
+                    </div>
+                    <div class="w-day-col">
+                        <span class="w-name">Friday</span>
+                        <span class="w-temp" style="margin-top: 35px;">25&deg;</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- NEWS SECTION -->
+    <section class="news-view" aria-label="Trending news">
+        <div class="n-header">
+            <h2>Trending Global News</h2>
+            <div class="n-filters" role="group" aria-label="Filter news by category">
+                <select id="news-category-select" class="category-select" aria-label="Category Selection">
+                    <option value="all">All News</option>
+                    <option value="technology">Technology</option>
+                    <option value="sports">Sports</option>
+                    <option value="business">Business</option>
+                    <option value="health">Health</option>
+                    <option value="entertainment">Entertainment</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="news-grid" id="news-grid">
+            <article class="news-card glass-panel">
+                <div class="nc-img">
+                    <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80" alt="" loading="lazy">
+                    <span class="nc-tag">Technology</span>
+                </div>
+                <div class="nc-body">
+                    <h4>New AI Breakthrough Promises Faster Processing</h4>
+                    <p>Researchers have developed a new architecture that dramatically reduces computation times for complex neural networks globally...</p>
+                </div>
+                <div class="nc-footer">
+                    <span>TechCrunch</span>
+                    <span>2 hours ago</span>
+                </div>
+            </article>
+            <article class="news-card glass-panel">
+                <div class="nc-img">
+                    <img src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=600&q=80" alt="" loading="lazy">
+                    <span class="nc-tag">Business</span>
+                </div>
+                <div class="nc-body">
+                    <h4>Global Markets Rally Amid Tech Sector Growth</h4>
+                    <p>Investors are showing renewed confidence as major technology firms report earnings that exceed analyst expectations worldwide...</p>
+                </div>
+                <div class="nc-footer">
+                    <span>Bloomberg</span>
+                    <span>4 hours ago</span>
+                </div>
+            </article>
+            <article class="news-card glass-panel">
+                <div class="nc-img">
+                    <img src="https://images.unsplash.com/photo-1444858291040-58f756a3bdd6?auto=format&fit=crop&w=600&q=80" alt="" loading="lazy">
+                    <span class="nc-tag">Science</span>
+                </div>
+                <div class="nc-body">
+                    <h4>Mars Rover Discovers Traces of Ancient Water</h4>
+                    <p>The latest soil samples analyzed by the rover indicate that liquid water once flowed freely across the Martian equator...</p>
+                </div>
+                <div class="nc-footer">
+                    <span>Space.com</span>
+                    <span>6 hours ago</span>
+                </div>
+            </article>
+            <article class="news-card glass-panel">
+                <div class="nc-img">
+                    <img src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=600&q=80" alt="" loading="lazy">
+                    <span class="nc-tag">Environment</span>
+                </div>
+                <div class="nc-body">
+                    <h4>New Renewable Energy Policy Passed</h4>
+                    <p>A landmark agreement has been reached to drastically increase subsidies for solar and wind energy production by 2030...</p>
+                </div>
+                <div class="nc-footer">
+                    <span>Reuters</span>
+                    <span>12 hours ago</span>
+                </div>
+            </article>
+            <article class="news-card glass-panel">
+                <div class="nc-img">
+                    <img src="https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=600&q=80" alt="" loading="lazy">
+                    <span class="nc-tag">Sports</span>
+                </div>
+                <div class="nc-body">
+                    <h4>Championship Finals Draw Record Viewership</h4>
+                    <p>Millions tune in worldwide to watch the historic showdown between the league's top contenders...</p>
+                </div>
+                <div class="nc-footer">
+                    <span>ESPN</span>
+                    <span>1 day ago</span>
+                </div>
+            </article>
+            <article class="news-card glass-panel">
+                <div class="nc-img">
+                    <img src="https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=600&q=80" alt="" loading="lazy">
+                    <span class="nc-tag">Entertainment</span>
+                </div>
+                <div class="nc-body">
+                    <h4>Blockbuster Movie Breaks Box Office Records</h4>
+                    <p>The highly anticipated sequel has shattered opening weekend records across multiple global markets...</p>
+                </div>
+                <div class="nc-footer">
+                    <span>Variety</span>
+                    <span>1 day ago</span>
+                </div>
+            </article>
+            <article class="news-card glass-panel">
+                <div class="nc-img">
+                    <img src="https://images.unsplash.com/photo-1531297122539-d31b0a140618?auto=format&fit=crop&w=600&q=80" alt="" loading="lazy">
+                    <span class="nc-tag">Technology</span>
+                </div>
+                <div class="nc-body">
+                    <h4>Next-Gen Smartphones Unveiled</h4>
+                    <p>Major tech giants have announced their latest flagship devices featuring revolutionary battery technology...</p>
+                </div>
+                <div class="nc-footer">
+                    <span>The Verge</span>
+                    <span>2 days ago</span>
+                </div>
+            </article>
+            <article class="news-card glass-panel">
+                <div class="nc-img">
+                    <img src="https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?auto=format&fit=crop&w=600&q=80" alt="" loading="lazy">
+                    <span class="nc-tag">Business</span>
+                </div>
+                <div class="nc-body">
+                    <h4>Startup Funding Reaches New Highs</h4>
+                    <p>Venture capital investments in green-tech startups have doubled in the last quarter...</p>
+                </div>
+                <div class="nc-footer">
+                    <span>Forbes</span>
+                    <span>2 days ago</span>
+                </div>
+            </article>
+            <article class="news-card glass-panel">
+                <div class="nc-img">
+                    <img src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=600&q=80" alt="" loading="lazy">
+                    <span class="nc-tag">Health</span>
+                </div>
+                <div class="nc-body">
+                    <h4>New Nutritional Guidelines Published</h4>
+                    <p>The World Health Organization releases updated dietary advice focusing on sustainable eating habits...</p>
+                </div>
+                <div class="nc-footer">
+                    <span>Healthline</span>
+                    <span>3 days ago</span>
+                </div>
+            </article>
+            <article class="news-card glass-panel">
+                <div class="nc-img">
+                    <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=600&q=80" alt="" loading="lazy">
+                    <span class="nc-tag">Technology</span>
+                </div>
+                <div class="nc-body">
+                    <h4>Open Source Software Adoption Grows</h4>
+                    <p>Enterprise adoption of open-source solutions has reached an all-time high this year globally...</p>
+                </div>
+                <div class="nc-footer">
+                    <span>Wired</span>
+                    <span>3 days ago</span>
+                </div>
+            </article>
+            <article class="news-card glass-panel">
+                <div class="nc-img">
+                    <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80" alt="" loading="lazy">
+                    <span class="nc-tag">Business</span>
+                </div>
+                <div class="nc-body">
+                    <h4>Cryptocurrency Regulations Expand</h4>
+                    <p>Several nations have announced new frameworks for digital currency taxation and reporting...</p>
+                </div>
+                <div class="nc-footer">
+                    <span>WSJ</span>
+                    <span>4 days ago</span>
+                </div>
+            </article>
+            <article class="news-card glass-panel">
+                <div class="nc-img">
+                    <img src="https://images.unsplash.com/photo-1478737270239-2f02b77fc618?auto=format&fit=crop&w=600&q=80" alt="" loading="lazy">
+                    <span class="nc-tag">Science</span>
+                </div>
+                <div class="nc-body">
+                    <h4>New Exoplanet Discovered in Habitable Zone</h4>
+                    <p>Astronomers have identified an Earth-sized planet orbiting a nearby star, showing signs of an atmosphere...</p>
+                </div>
+                <div class="nc-footer">
+                    <span>NatGeo</span>
+                    <span>5 days ago</span>
+                </div>
+            </article>
+        </div>
+
+        <div id="news-sentinel" class="news-sentinel" aria-hidden="true"></div>
+        
+        <div style="text-align: center; margin-top: 80px; color: var(--text-dark); font-size: 14px; font-weight: 300;">
+            &copy; 2026 WeatherWise. Data provided by OpenWeather API & NewsAPI.
+        </div>
     </section>
   </main>
-  <script type="module" src="js/location.js"></script>
+
+    <!-- Back to top -->
+    <button id="back-to-top" class="back-to-top btn-icon" type="button" aria-label="Back to top" title="Back to top">
+        <i class="ph ph-arrow-up" aria-hidden="true"></i>
+    </button>
+
+    <!-- LOADERS AND ERRORS -->
+    <div class="loader-overlay" id="app-loader" aria-hidden="true" role="status" aria-label="Loading">
+        <div class="spinner"></div>
+    </div>
+    
+    <div class="error-toast glass-panel" id="error-toast" role="alert" aria-live="assertive">
+        <i class="ph-fill ph-warning-circle" aria-hidden="true"></i>
+        <span>Location not found. Please try another search.</span>
+    </div>
+
+    <script src="js/feedback.js"></script>
+    <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/location.js"></script>
   <script type="module" src="js/weather.js"></script>
   <script type="module" src="js/news.js"></script>
   <script type="module" src="js/ui.js"></script>
   <script type="module" src="js/app.js"></script>
+
 </body>
 </html>
