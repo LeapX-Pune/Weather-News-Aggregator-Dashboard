@@ -1,46 +1,3 @@
-function getApiKey() {
-  return window.WEATHER_API_KEY || '';
-}
-
-function generateMockWeather(locationData) {
-  const city = locationData?.city || 'New York';
-  return {
-    location: city,
-    temperature: Math.round(15 + Math.random() * 15),
-    description: ['Sunny', 'Partly cloudy', 'Cloudy', 'Light rain', 'Clear'][Math.floor(Math.random() * 5)],
-    humidity: Math.round(40 + Math.random() * 40),
-  };
-}
-
-export async function fetchWeather(locationData) {
-  const key = getApiKey();
-  if (!key) {
-    console.log('Weather Service: No API key set. Using mock data.');
-    return generateMockWeather(locationData);
-  }
-
-  const queryParam = locationData.city ? locationData.city : `${locationData.lat},${locationData.lon}`;
-  const url = `https://api.weatherapi.com/v1/current.json?key=${key}&q=${encodeURIComponent(queryParam)}`;
-
-  console.log(`Weather Service: Fetching live data for query: "${queryParam}"`);
-
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    console.warn(`Weather Service: API returned ${response.status}. Falling back to mock data.`);
-    return generateMockWeather(locationData);
-  }
-
-  const data = await response.json();
-
-  return {
-    location: data.location.name,
-    temperature: Math.round(data.current.temp_c),
-    description: data.current.condition.text,
-    humidity: data.current.humidity,
-  };
-}
-<<<<<<< Updated upstream
 /** Weather data layer — static fixture generation for UI shell */
 
 const VALID_CITIES = {
@@ -49,7 +6,6 @@ const VALID_CITIES = {
   delhi: { city: 'Delhi', region: 'Delhi', country: 'India', lat: 28.6139, lon: 77.2090 },
   'new delhi': { city: 'New Delhi', region: 'Delhi', country: 'India', lat: 28.6139, lon: 77.2090 },
   bengaluru: { city: 'Bengaluru', region: 'Karnataka', country: 'India', lat: 12.9716, lon: 77.5946 },
-  bangalore: { city: 'Bengaluru', region: 'Karnataka', country: 'India', lat: 12.9716, lon: 77.5946 },
   hyderabad: { city: 'Hyderabad', region: 'Telangana', country: 'India', lat: 17.3850, lon: 78.4867 },
   chennai: { city: 'Chennai', region: 'Tamil Nadu', country: 'India', lat: 13.0827, lon: 80.2707 },
   kolkata: { city: 'Kolkata', region: 'West Bengal', country: 'India', lat: 22.5726, lon: 88.3639 },
@@ -219,5 +175,3 @@ export function getCitySuggestions(query) {
 
   return results;
 }
-=======
->>>>>>> Stashed changes

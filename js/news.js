@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 /** News data layer — static fixture articles for UI shell */
 
 export const CATEGORY_FALLBACKS = {
@@ -55,24 +54,4 @@ export function getTickerHeadlines(articles) {
     .filter((a) => a.breaking || a.category === 'business')
     .slice(0, 3)
     .map((a) => `${a.title}...`);
-=======
-const MOCK_ARTICLES = [
-  { title: 'Local weather stays mild through the week', url: '#' },
-  { title: 'Meteorologists expect light rain tomorrow', url: '#' },
-  { title: 'Top tips to stay cool during warm days', url: '#' },
-  { title: 'City expands urban green spaces', url: '#' },
-  { title: 'New solar farm to power 10,000 homes', url: '#' },
-];
-
-export async function fetchNews(locationData) {
-  const city = locationData?.city || 'your area';
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve([
-        { title: `Weather outlook for ${city} this week`, url: '#' },
-        ...MOCK_ARTICLES,
-      ]);
-    }, 600);
-  });
->>>>>>> Stashed changes
 }
