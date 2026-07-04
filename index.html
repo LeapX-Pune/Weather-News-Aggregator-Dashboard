@@ -126,7 +126,7 @@
                         <i class="ph ph-crosshair" aria-hidden="true"></i>
                     </button>
                     
-                    <div class="search-wrapper" id="search-wrapper" role="search">
+                    <form class="search-wrapper" id="search-wrapper" role="search">
                         <div class="search-bar">
                             <i class="ph ph-magnifying-glass search-icon" aria-hidden="true"></i>
                             <label for="city-search" class="visually-hidden">Search city</label>
@@ -134,13 +134,13 @@
                             <button type="button" id="search-clear" class="search-clear" aria-label="Clear search" tabindex="-1">
                                 <i class="ph ph-x" aria-hidden="true"></i>
                             </button>
-                            <button type="button" id="search-btn" class="search-btn" aria-label="Search">
+                            <button type="submit" id="search-btn" class="search-btn" aria-label="Search">
                                 <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
                             </button>
                             <span class="search-spinner" aria-hidden="true"></span>
                         </div>
                         <div id="search-dropdown" class="search-dropdown" role="listbox" hidden></div>
-                    </div>
+                    </form>
                 </div>
                 <div class="header-meta">
                     <span id="weather-last-updated" class="meta-text">Updated just now</span>
@@ -234,10 +234,14 @@
         <div class="n-header">
             <h2>Trending Global News</h2>
             <div class="n-filters" role="group" aria-label="Filter news by category">
-                <button class="n-filter active" type="button" data-category="all" aria-pressed="true">All News</button>
-                <button class="n-filter" type="button" data-category="technology" aria-pressed="false">Technology</button>
-                <button class="n-filter" type="button" data-category="business" aria-pressed="false">Business</button>
-                <button class="n-filter" type="button" data-category="sports" aria-pressed="false">Sports</button>
+                <select id="news-category-select" class="category-select" aria-label="Category Selection">
+                    <option value="all">All News</option>
+                    <option value="technology">Technology</option>
+                    <option value="sports">Sports</option>
+                    <option value="business">Business</option>
+                    <option value="health">Health</option>
+                    <option value="entertainment">Entertainment</option>
+                </select>
             </div>
         </div>
 

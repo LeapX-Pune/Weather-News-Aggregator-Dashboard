@@ -128,6 +128,14 @@ function initCategoryFilters() {
       loadNews({ category, page: 1 });
     });
   });
+
+  const select = document.getElementById('news-category-select');
+  select?.addEventListener('change', (e) => {
+    const category = e.target.value || 'all';
+    newsPage = 1;
+    hasMoreNews = true;
+    loadNews({ category, page: 1 });
+  });
 }
 
 function initInfiniteScroll() {

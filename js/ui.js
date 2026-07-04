@@ -346,6 +346,11 @@ export function updateFilterButtons(activeCategory) {
     btn.classList.toggle('active', isActive);
     btn.setAttribute('aria-pressed', String(isActive));
   });
+
+  const select = document.getElementById('news-category-select');
+  if (select) {
+    select.value = activeCategory;
+  }
 }
 
 export function initBackToTop() {
