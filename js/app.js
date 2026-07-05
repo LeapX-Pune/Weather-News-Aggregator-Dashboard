@@ -46,6 +46,19 @@ function initCategoryFilters() {
     const category = e.target.value || 'all';
     loadNews({ category });
   });
+
+  // Pill button filters — drive the hidden select so existing logic stays intact
+  document.querySelectorAll('.n-filter[data-category]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const category = btn.dataset.category || 'all';
+      if (select) {
+        select.value = category;
+        select.dispatchEvent(new Event('change'));
+      } else {
+        loadNews({ category });
+      }
+    });
+  });
 }
 
 function initKeyboardShortcuts() {
