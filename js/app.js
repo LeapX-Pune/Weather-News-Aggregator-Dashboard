@@ -10,6 +10,7 @@ import {
 } from './ui.js';
 import { initSearch } from './search.js';
 import { prefersReducedMotion } from './utils.js';
+import { getAutomaticLocation } from './location.js';
 
 let currentCategory = 'all';
 
@@ -80,8 +81,25 @@ function init() {
     }, 400);
   });
 
-  document.getElementById('geolocate-btn')?.addEventListener('click', () => {
-    showToast('Use the search bar to find a city.');
+  document.getElementById('geolocate-btn')?.addEventListener('click', async () => {
+    searchApi?.clear();
+    
+    const select = document.getElementById('news-category-select');
+    if (select) {
+      select.value = 'all';
+    }
+    loadNews({ category: 'all' });
+
+    setWeatherRefreshing(true);
+    try {
+      const location = await getAutomaticLocation();
+      loadWeather(location.city);
+      showSuccessToast(`Location updated to ${location.city}`);
+    } catch (err) {
+      showToast('Could not determine location.');
+    } finally {
+      setWeatherRefreshing(false);
+    }
   });
 
   searchApi = initSearch({ onSearch: handleSearch, onInvalid: handleInvalidSearch });
