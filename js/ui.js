@@ -238,10 +238,13 @@ function buildNewsCard(article, readSet) {
   const imgSrc = article.image || getArticleFallbackImage(article.category);
   const fallbackSrc = getArticleFallbackImage(article.category || 'default');
 
+  // Use article.url if available (real API), otherwise fall back gracefully
+  const articleUrl = article.url || article.link || '#';
+
   return `
     <article class="news-card glass-panel${isRead ? ' is-read' : ''}" data-id="${article.id}" data-category="${article.category}" tabindex="0" role="article" aria-label="${sanitize(article.title)}">
       <div class="nc-img">
-        <img src="${imgSrc}" alt="" loading="lazy" decoding="async" class="nc-img-lazy"
+        <img src="${imgSrc}" alt="${sanitize(article.title)}" loading="lazy" decoding="async" class="nc-img-lazy"
           onerror="this.onerror=null;this.src='${fallbackSrc}'">
         <span class="nc-tag">${sanitize(article.category)}</span>
         ${badges ? `<div class="nc-badges">${badges}</div>` : ''}
@@ -251,8 +254,13 @@ function buildNewsCard(article, readSet) {
         <p>${sanitize(article.excerpt)}</p>
       </div>
       <div class="nc-footer">
-        <span>${sanitize(article.source)}</span>
-        <span>${formatRelativeTime(article.publishedAt)}</span>
+        <div class="nc-meta">
+          <span class="nc-source"><i class="ph ph-newspaper" aria-hidden="true"></i> ${sanitize(article.source)}</span>
+          <span class="nc-time"><i class="ph ph-clock" aria-hidden="true"></i> ${formatRelativeTime(article.publishedAt)}</span>
+        </div>
+        <a href="${articleUrl}" target="_blank" rel="noopener noreferrer" class="nc-read-more" aria-label="Read more: ${sanitize(article.title)}">
+          Read More <i class="ph ph-arrow-right" aria-hidden="true"></i>
+        </a>
       </div>
     </article>`;
 }
@@ -263,15 +271,33 @@ export function renderNewsSkeleton(count = 4) {
   grid.innerHTML = Array.from({ length: count }, () => `
     <div class="news-card glass-panel skeleton-card" aria-hidden="true">
       <div class="skeleton-img skeleton-shimmer"></div>
-      <div class="skeleton-line skeleton-shimmer" style="width: 80%;"></div>
-      <div class="skeleton-line skeleton-shimmer" style="width: 100%;"></div>
-      <div class="skeleton-line skeleton-shimmer" style="width: 60%;"></div>
+      <div class="skeleton-body">
+        <div class="skeleton-tag skeleton-shimmer"></div>
+        <div class="skeleton-line skeleton-shimmer" style="width: 90%;"></div>
+        <div class="skeleton-line skeleton-shimmer" style="width: 70%;"></div>
+        <div class="skeleton-line skeleton-shimmer" style="width: 100%;"></div>
+        <div class="skeleton-line skeleton-shimmer" style="width: 85%;"></div>
+        <div class="skeleton-footer">
+          <div class="skeleton-line skeleton-shimmer" style="width: 40%;"></div>
+          <div class="skeleton-line skeleton-shimmer" style="width: 25%;"></div>
+        </div>
+      </div>
     </div>`).join('');
 }
 
 export function renderNewsGrid(articles, { append = false, animate = true } = {}) {
   const grid = document.getElementById('news-grid');
   if (!grid) return;
+
+  if (!articles || articles.length === 0) {
+    grid.innerHTML = `
+      <div class="news-empty" role="status" aria-live="polite">
+        <i class="ph ph-newspaper" aria-hidden="true"></i>
+        <h3>No articles available</h3>
+        <p>Try selecting a different category or check back later.</p>
+      </div>`;
+    return;
+  }
 
   const html = articles.map((a) => buildNewsCard(a, readArticles)).join('');
 

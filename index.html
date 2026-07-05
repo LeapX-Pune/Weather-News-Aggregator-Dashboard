@@ -236,9 +236,20 @@
     <!-- NEWS SECTION -->
     <section class="news-view" aria-label="Trending news">
         <div class="n-header">
-            <h2>Trending Global News</h2>
+            <div class="n-header-text">
+                <h2>Trending News</h2>
+                <p class="n-subtitle">Latest headlines from around the world</p>
+            </div>
             <div class="n-filters" role="group" aria-label="Filter news by category">
-                <select id="news-category-select" class="category-select" aria-label="Category Selection">
+                <!-- Pill buttons — handled by updateFilterButtons() in ui.js -->
+                <button class="n-filter active" data-category="all" aria-pressed="true" type="button">All News</button>
+                <button class="n-filter" data-category="technology" aria-pressed="false" type="button">Technology</button>
+                <button class="n-filter" data-category="business" aria-pressed="false" type="button">Business</button>
+                <button class="n-filter" data-category="sports" aria-pressed="false" type="button">Sports</button>
+                <button class="n-filter" data-category="health" aria-pressed="false" type="button">Health</button>
+                <button class="n-filter" data-category="entertainment" aria-pressed="false" type="button">Entertainment</button>
+                <!-- Hidden select kept for app.js initCategoryFilters() compatibility -->
+                <select id="news-category-select" class="category-select visually-hidden" aria-hidden="true" tabindex="-1">
                     <option value="all">All News</option>
                     <option value="technology">Technology</option>
                     <option value="sports">Sports</option>
