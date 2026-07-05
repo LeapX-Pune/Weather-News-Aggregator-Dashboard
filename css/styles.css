@@ -94,13 +94,14 @@ input { background: none; border: none; outline: none; font-family: inherit; col
   padding: 32px;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 16px; /* Group metrics cards closer */
   flex-shrink: 0;
 }
 
 .brand {
-  text-align: center;
-  margin-bottom: 16px;
+  text-align: left; /* Left align brand logo with metrics cards */
+  padding-left: 8px; /* Alignment offset */
+  margin-bottom: 24px; /* Space below brand logo */
 }
 .brand span {
   font-family: 'Outfit', cursive;
@@ -127,6 +128,10 @@ input { background: none; border: none; outline: none; font-family: inherit; col
 }
 .s-header i { font-size: 20px; }
 .s-main .s-val { font-size: 32px; font-weight: 300; display: block; margin-bottom: 8px; }
+#wind-value i {
+  font-size: 24px;
+  vertical-align: middle;
+}
 .s-main .s-desc { font-size: 14px; font-weight: 500; }
 
 .s-graph { margin-top: 20px; height: 60px; width: 100%; position: relative; }
@@ -139,7 +144,6 @@ input { background: none; border: none; outline: none; font-family: inherit; col
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin-top: auto;
 }
 .m-item {
   display: flex;
@@ -164,7 +168,7 @@ input { background: none; border: none; outline: none; font-family: inherit; col
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 60px;
+  margin-bottom: 40px; /* 8px system spacing */
   gap: 16px;
 }
 .location-pin {
@@ -205,19 +209,21 @@ input { background: none; border: none; outline: none; font-family: inherit; col
 .center-stage {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-bottom: auto;
+  gap: 12px; /* Tighten visual hero grouping */
+  margin-top: auto; /* Vertically center weather hero stage */
+  margin-bottom: 32px; /* Close spacing to weekly forecast */
 }
 .temp-row {
   display: flex;
   align-items: flex-start;
-  gap: 32px;
+  gap: 16px; /* Group high/low pills closer to temperature */
 }
 .t-huge {
   font-size: 160px;
   font-weight: 200;
   line-height: 0.8;
   letter-spacing: -6px;
+  margin-left: 6px; /* Visual left offset to align edge with Location text */
 }
 .t-pills {
   display: flex;
@@ -236,16 +242,39 @@ input { background: none; border: none; outline: none; font-family: inherit; col
   align-items: center;
   gap: 16px;
 }
+.t-pill:nth-child(2) {
+  opacity: 0.6; /* Semantic low temp pill styling */
+}
 .t-pill span { color: var(--text-dark); }
 
+.condition-huge {
+  display: flex;
+  align-items: center;
+  gap: 16px; /* Close grouping of weather icon and conditions text */
+  margin-top: 4px; /* Tighten visual block vertical flow */
+}
+.condition-huge #condition-icon i {
+  font-size: 36px !important; /* De-escalate size so it supports rather than competes */
+  opacity: 0.85; /* Soften visual weight of icon */
+  color: #fbbf24; /* Core sunny weather color */
+}
 .condition-huge h1 {
   font-size: 72px;
   font-weight: 300;
   line-height: 1.1;
   letter-spacing: -1px;
-  margin-top: 16px;
+  margin-top: 0; /* Tighten current weather grouping */
 }
-.condition-huge h1 span { color: var(--text-dim); }
+.condition-huge h1 #condition-title {
+  color: #fbbf24;
+  text-shadow: 0 0 40px rgba(251, 191, 36, 0.35);
+}
+.condition-huge h1 #condition-desc {
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 300;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); /* Readable contrast overlay */
+}
 
 /* Right Middle Widgets */
 .right-widgets {
@@ -313,9 +342,9 @@ input { background: none; border: none; outline: none; font-family: inherit; col
 /* Bottom Wave Forecast */
 .wave-forecast {
   width: 100%;
-  margin-top: 60px;
+  margin-top: 16px; /* Group closely with weather hero stage */
   position: relative;
-  padding-bottom: 20px;
+  padding-bottom: 16px;
 }
 .wave-days {
   display: flex;
@@ -323,12 +352,14 @@ input { background: none; border: none; outline: none; font-family: inherit; col
   align-items: flex-end;
   position: relative;
   z-index: 2;
-  padding: 0 40px;
+  padding: 0; /* Align outer columns to main content edges */
 }
 .w-day-col {
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 80px; /* Fixed column width for alignment */
+  text-align: center;
   gap: 80px; /* Space for the wave */
 }
 .w-name { font-size: 16px; font-weight: 300; color: var(--text-main); }
@@ -339,8 +370,8 @@ input { background: none; border: none; outline: none; font-family: inherit; col
 .wave-svg {
   position: absolute;
   top: 40px;
-  left: 0;
-  width: 100%;
+  left: 40px; /* Offset to center of first column */
+  width: calc(100% - 80px); /* Span to center of last column */
   height: 100px;
   z-index: 1;
   overflow: visible;
@@ -476,7 +507,8 @@ input { background: none; border: none; outline: none; font-family: inherit; col
 }
 @media (max-width: 1000px) {
   .hero-view { flex-direction: column; }
-  .left-panel { width: 100%; flex-direction: row; flex-wrap: wrap; align-items: stretch; border-radius: 24px; }
+  .main-content { order: 1; }
+  .left-panel { order: 2; width: 100%; flex-direction: row; flex-wrap: wrap; align-items: stretch; border-radius: 24px; }
   .left-panel > * { flex: 1; min-width: 200px; }
   .brand { width: 100%; text-align: left; }
   .wave-svg { display: none; }
