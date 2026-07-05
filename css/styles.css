@@ -615,6 +615,7 @@ input { background: none; border: none; outline: none; font-family: inherit; col
 }
 .nc-badge-breaking { background: rgba(248,113,113,0.9); color: #fff; }
 .nc-badge-new { background: rgba(56,189,248,0.9); color: #fff; }
+.nc-badge-local { background: rgba(74,222,128,0.9); color: #fff; }
 
 /* Card reveal animation */
 .card-reveal {
@@ -851,7 +852,7 @@ button:focus-visible, input:focus-visible, .news-card:focus-visible, .n-filter:f
   border: 1px solid var(--glass-border); font-size: 13px;
   transition: transform 0.2s ease; pointer-events: none;
 }
-.pull-refresh.active { opacity: 1; }
+.pull-refresh.active { opacity: 1; transform: translateX(-50%) translateY(70px); }
 
 /* ─── Weather Ambience & Animations ─── */
 .weather-ambience {

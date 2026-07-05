@@ -225,6 +225,10 @@ export function renderFeatured(article) {
       <span style="font-size: 11px; color: var(--text-dark);">${sanitize(article.source)} &bull; ${formatRelativeTime(article.publishedAt)}</span>
     </div>`;
   card.dataset.articleId = article.id;
+  const articleUrl = article.url || article.link || '#';
+  card.onclick = () => {
+    if (articleUrl && articleUrl !== '#') window.open(articleUrl, '_blank', 'noopener');
+  };
 }
 
 function buildNewsCard(article, readSet) {
@@ -233,6 +237,7 @@ function buildNewsCard(article, readSet) {
   const badges = [
     article.breaking ? '<span class="nc-badge nc-badge-breaking">Breaking News</span>' : '',
     isNew ? '<span class="nc-badge nc-badge-new">New</span>' : '',
+    article.local ? '<span class="nc-badge nc-badge-local">Local</span>' : '',
   ].filter(Boolean).join('');
 
   const imgSrc = article.image || getArticleFallbackImage(article.category);
@@ -288,6 +293,25 @@ export function renderNewsSkeleton(count = 4) {
 export function renderNewsGrid(articles, { append = false, animate = true } = {}) {
   const grid = document.getElementById('news-grid');
   if (!grid) return;
+
+  const sentinel = document.getElementById('news-sentinel');
+  if (sentinel && !sentinel.dataset.wired) {
+    sentinel.dataset.wired = 'true';
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting) {
+          const endMsg = sentinel.querySelector('.sentinel-end');
+          if (!endMsg) {
+            const msg = document.createElement('div');
+            msg.className = 'sentinel-end';
+            msg.textContent = 'All articles loaded';
+            msg.style.cssText = 'text-align:center;padding:32px;color:var(--text-dark);font-size:13px;font-weight:300;';
+            sentinel.appendChild(msg);
+          }
+        }
+      }, { rootMargin: '100px' }).observe(sentinel);
+    }
+  }
 
   if (!articles || articles.length === 0) {
     grid.innerHTML = `
