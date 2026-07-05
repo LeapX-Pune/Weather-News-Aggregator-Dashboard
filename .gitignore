@@ -1,6 +1,4 @@
 .DS_Store
-
-# Environment variables — API keys ko commit mat karo
 .env
 .env.local
 .env.*
