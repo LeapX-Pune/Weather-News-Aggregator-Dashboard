@@ -6,7 +6,7 @@ import {
   showLoader, showToast, showSuccessToast, updateConnectionStatus,
   initClock, renderWeather, renderTicker, renderFeatured,
   renderNewsGrid, renderNewsSkeleton, updateFilterButtons,
-  initBackToTop, initPullToRefresh, setWeatherRefreshing,
+  initBackToTop, initPullToRefresh, setWeatherRefreshing, initSectionRift,
 } from './ui.js';
 import { initSearch } from './search.js';
 import { initNetwork, onNetworkChange, isOnline } from './network.js';
@@ -212,6 +212,7 @@ async function init() {
   initCategoryFilters();
   initInfiniteScroll();
   initWeatherRefresh();
+  initSectionRift();
 
   updateConnectionStatus({ online: isOnline(), health: 'healthy' });
   initNetworkRecovery();

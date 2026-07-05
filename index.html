@@ -31,12 +31,16 @@
    
     <!-- FULL SCREEN CINEMATIC BACKGROUND -->
     <div class="cinematic-bg">
-        <img src="https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&w=1920&q=80" alt="">
+        <img id="bg-img-a" src="https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&w=1920&q=80" alt="" class="bg-img active">
+        <img id="bg-img-b" src="" alt="" class="bg-img" aria-hidden="true">
         <div class="bg-overlay"></div>
     </div>
 
     <!-- Weather ambience overlay -->
     <div id="weather-ambience" class="weather-ambience ambience-sunny" aria-hidden="true"></div>
+
+    <!-- Temperature tint overlay -->
+    <div id="temp-tint" class="temp-tint tint-mild" aria-hidden="true"></div>
 
     <!-- Offline Banner -->
     <div id="offline-banner" class="offline-banner" aria-hidden="true">
@@ -227,6 +231,26 @@
                 </div>
             </section>
         </main>
+    </div>
+
+    <!-- SECTION RIFT — cinematic transition between Weather and News -->
+    <div class="section-rift" id="section-rift" aria-hidden="true">
+        <div class="rift-bg-fade rift-fade-top"></div>
+        <div class="rift-core">
+            <div class="rift-beam"></div>
+            <div class="rift-beam rift-beam-delay"></div>
+            <div class="rift-label">
+                <span class="rift-dot"></span>
+                <span class="rift-label-text">World News</span>
+                <span class="rift-dot"></span>
+            </div>
+            <div class="rift-particles" aria-hidden="true">
+                <span class="rp rp-1"></span><span class="rp rp-2"></span>
+                <span class="rp rp-3"></span><span class="rp rp-4"></span>
+                <span class="rp rp-5"></span><span class="rp rp-6"></span>
+            </div>
+        </div>
+        <div class="rift-bg-fade rift-fade-bot"></div>
     </div>
 
     <!-- NEWS SECTION -->

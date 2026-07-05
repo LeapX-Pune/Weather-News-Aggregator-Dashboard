@@ -22,11 +22,151 @@ const AMBIENCE_MAP = {
 
 let clockInterval = null;
 
-// Cache the cinematic bg img reference — queried once, not on every weather render
-let _bgImg = null;
-function getBgImg() {
-  if (!_bgImg) _bgImg = document.querySelector('.cinematic-bg img');
-  return _bgImg;
+// ─── Cinematic Background System ───
+const BG_IMAGES = {
+  sunny: {
+    morning:   'https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?auto=format&fit=crop&w=1920&q=80',
+    afternoon: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1920&q=80',
+    evening:   'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&w=1920&q=80',
+    night:     'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?auto=format&fit=crop&w=1920&q=80',
+  },
+  'partly-cloudy': {
+    morning:   'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1920&q=80',
+    afternoon: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1920&q=80',
+    evening:   'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&w=1920&q=80',
+    night:     'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?auto=format&fit=crop&w=1920&q=80',
+  },
+  cloudy: {
+    morning:   'https://images.unsplash.com/photo-1534088568595-a066f410bcda?auto=format&fit=crop&w=1920&q=80',
+    afternoon: 'https://images.unsplash.com/photo-1534088568595-a066f410bcda?auto=format&fit=crop&w=1920&q=80',
+    evening:   'https://images.unsplash.com/photo-1534088568595-a066f410bcda?auto=format&fit=crop&w=1920&q=80',
+    night:     'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?auto=format&fit=crop&w=1920&q=80',
+  },
+  rainy:        'https://images.unsplash.com/photo-1428592953211-077101b2021b?auto=format&fit=crop&w=1920&q=80',
+  thunderstorm: 'https://images.unsplash.com/photo-1492011221367-f47e96b5d393?auto=format&fit=crop&w=1920&q=80',
+  snowy:        'https://images.unsplash.com/photo-1491002052546-bf38f186af56?auto=format&fit=crop&w=1920&q=80',
+};
+
+const BG_FILTERS = {
+  sunny: {
+    morning:   'brightness(0.85) contrast(1.05) saturate(1.1)',
+    afternoon: 'brightness(0.75) contrast(1.1) sepia(0.08)',
+    evening:   'brightness(0.7) contrast(1.1) saturate(1.15) sepia(0.1)',
+    night:     'brightness(0.45) contrast(1.2) saturate(0.65)',
+  },
+  'partly-cloudy': {
+    morning:   'brightness(0.8) contrast(1.05) saturate(0.95)',
+    afternoon: 'brightness(0.7) contrast(1.05) saturate(0.9)',
+    evening:   'brightness(0.65) contrast(1.1) saturate(1.05)',
+    night:     'brightness(0.4) contrast(1.15) saturate(0.6)',
+  },
+  cloudy: {
+    morning:   'brightness(0.65) contrast(1.0) saturate(0.85)',
+    afternoon: 'brightness(0.6) contrast(1.05) saturate(0.8)',
+    evening:   'brightness(0.55) contrast(1.05) saturate(0.8)',
+    night:     'brightness(0.4) contrast(1.1) saturate(0.6)',
+  },
+  rainy: {
+    morning:   'brightness(0.5) contrast(1.1) saturate(0.7)',
+    afternoon: 'brightness(0.5) contrast(1.1) saturate(0.7)',
+    evening:   'brightness(0.45) contrast(1.1) saturate(0.65)',
+    night:     'brightness(0.35) contrast(1.1) saturate(0.6)',
+  },
+  thunderstorm: {
+    morning:   'brightness(0.45) contrast(1.2) saturate(0.6)',
+    afternoon: 'brightness(0.45) contrast(1.2) saturate(0.6)',
+    evening:   'brightness(0.4) contrast(1.2) saturate(0.55)',
+    night:     'brightness(0.3) contrast(1.2) saturate(0.5)',
+  },
+  snowy: {
+    morning:   'brightness(0.8) contrast(0.95) saturate(0.5)',
+    afternoon: 'brightness(0.75) contrast(0.95) saturate(0.5)',
+    evening:   'brightness(0.65) contrast(1.0) saturate(0.45)',
+    night:     'brightness(0.45) contrast(1.0) saturate(0.4)',
+  },
+};
+
+function getTimeOfDay(hour) {
+  if (hour >= 5  && hour < 12) return 'morning';
+  if (hour >= 12 && hour < 17) return 'afternoon';
+  if (hour >= 17 && hour < 21) return 'evening';
+  return 'night';
+}
+
+function getCinematicBgUrl(icon, hour) {
+  const entry = BG_IMAGES[icon] || BG_IMAGES.sunny;
+  if (typeof entry === 'string') return entry;
+  const tod = getTimeOfDay(hour);
+  return entry[tod] || entry.afternoon;
+}
+
+let _activeBgSlot = 'a';
+let _lastBgUrl = null;
+
+function applyWeatherFilter(icon, hour, imgEl) {
+  if (prefersReducedMotion()) return;
+  const tod = getTimeOfDay(hour);
+  const entry = BG_FILTERS[icon] || BG_FILTERS.sunny;
+  const filter = entry[tod] || entry.afternoon;
+  if (!imgEl.dataset.filterTransition) {
+    imgEl.style.transition = 'opacity 1s ease, filter 0.5s ease';
+    imgEl.dataset.filterTransition = '1';
+  }
+  imgEl.style.filter = filter;
+}
+
+const TEMP_TINT_CLASSES = ['tint-freezing', 'tint-cold', 'tint-mild', 'tint-warm', 'tint-hot'];
+
+function applyTempTint(temp) {
+  const el = document.getElementById('temp-tint');
+  if (!el) return;
+  el.classList.remove(...TEMP_TINT_CLASSES);
+  if (temp < 0)       el.classList.add('tint-freezing');
+  else if (temp < 10) el.classList.add('tint-cold');
+  else if (temp < 24) el.classList.add('tint-mild');
+  else if (temp < 34) el.classList.add('tint-warm');
+  else                el.classList.add('tint-hot');
+}
+
+function updateCinematicBackground(icon, temp) {
+  const bgA = document.getElementById('bg-img-a');
+  const bgB = document.getElementById('bg-img-b');
+  if (!bgA || !bgB) return;
+
+  const hour = new Date().getHours();
+  const newUrl = getCinematicBgUrl(icon, hour);
+
+  applyTempTint(temp);
+
+  if (newUrl === _lastBgUrl) {
+    // URL unchanged — just refresh filter in case temp/time shifted
+    applyWeatherFilter(icon, hour, _activeBgSlot === 'a' ? bgA : bgB);
+    return;
+  }
+  _lastBgUrl = newUrl;
+
+  const nextSlot = _activeBgSlot === 'a' ? 'b' : 'a';
+  const nextImg  = nextSlot === 'a' ? bgA : bgB;
+  const currImg  = _activeBgSlot === 'a' ? bgA : bgB;
+
+  // Pre-apply filter before the new image fades in
+  applyWeatherFilter(icon, hour, nextImg);
+
+  const onLoaded = () => {
+    nextImg.classList.add('active');
+    currImg.classList.remove('active');
+    _activeBgSlot = nextSlot;
+  };
+
+  nextImg.onload = onLoaded;
+  nextImg.onerror = () => { nextImg.onload = null; };
+  nextImg.src = newUrl;
+
+  // Already cached — fire immediately
+  if (nextImg.complete && nextImg.naturalWidth > 0) {
+    nextImg.onload = null;
+    onLoaded();
+  }
 }
 
 // Singleton lazy-image IntersectionObserver — created once, reused across renders
@@ -132,7 +272,6 @@ export function renderWeather(data) {
   const lastUpdated = document.getElementById('weather-last-updated');
   const syncTime = document.getElementById('sync-timestamp');
   const ambience = document.getElementById('weather-ambience');
-  const bgImg = getBgImg(); // use cached reference — no repeated querySelector
 
   if (loc) loc.textContent = data.location.display;
   if (temp) temp.innerHTML = `${Math.round(data.current.temp)}&deg;`;
@@ -167,21 +306,7 @@ export function renderWeather(data) {
     ambience.classList.add(AMBIENCE_MAP[data.current.icon] || 'ambience-sunny');
   }
 
-  // Apply bg filter — set transition only once to avoid style thrashing
-  if (bgImg && !prefersReducedMotion()) {
-    if (!bgImg.dataset.transitionSet) {
-      bgImg.style.transition = 'filter 0.5s ease';
-      bgImg.dataset.transitionSet = '1';
-    }
-    const filters = {
-      sunny: 'brightness(0.75) contrast(1.1) sepia(0.1)',
-      cloudy: 'brightness(0.6) contrast(1.05) saturate(0.8)',
-      rainy: 'brightness(0.5) contrast(1.1) saturate(0.7)',
-      thunderstorm: 'brightness(0.45) contrast(1.2) saturate(0.6)',
-      'partly-cloudy': 'brightness(0.65) contrast(1.05)',
-    };
-    bgImg.style.filter = filters[data.current.icon] || filters.sunny;
-  }
+  updateCinematicBackground(data.current.icon, data.current.temp);
 
   renderForecast(data.forecast);
 }
@@ -400,3 +525,75 @@ export function setWeatherRefreshing(isRefreshing) {
     btn.disabled = isRefreshing;
   }
 }
+
+export function initSectionRift() {
+  if (prefersReducedMotion()) return;
+
+  const newsSection = document.querySelector('.news-view');
+  const rift = document.getElementById('section-rift');
+  if (!newsSection || !rift) return;
+
+  // Build the one-shot flash overlay
+  const flash = document.createElement('div');
+  flash.className = 'rift-flash';
+  document.body.appendChild(flash);
+
+  // Pre-reveal state — hide header until we animate it in
+  newsSection.classList.add('news-pre-reveal');
+
+  let hasRevealed = false;
+
+  // Observer for the NEWS section entering the viewport
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting && !hasRevealed) {
+        hasRevealed = true;
+
+        // Fire the golden flash
+        flash.classList.add('fire');
+        flash.addEventListener('animationend', () => {
+          flash.classList.remove('fire');
+        }, { once: true });
+
+        // Reveal the news header
+        newsSection.classList.remove('news-pre-reveal');
+        newsSection.classList.add('news-revealed');
+
+        revealObserver.disconnect();
+      }
+    });
+  }, { threshold: 0.08 });
+
+  revealObserver.observe(newsSection);
+
+  // Parallax: dim/blur the cinematic bg as user scrolls toward news
+  const bgA = document.getElementById('bg-img-a');
+  const bgB = document.getElementById('bg-img-b');
+  const heroEl = document.querySelector('.hero-view');
+  if (!heroEl) return;
+
+  let rafId = null;
+  const onScroll = () => {
+    if (rafId) return;
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      const heroBottom = heroEl.getBoundingClientRect().bottom;
+      const vh = window.innerHeight;
+      // progress: 0 when hero bottom is at screen bottom, 1 when it reaches screen top
+      const progress = Math.max(0, Math.min(1, 1 - heroBottom / vh));
+      const activeImg = document.querySelector('.bg-img.active');
+      if (activeImg) {
+        const baseFilter = activeImg.style.filter || 'brightness(0.75) contrast(1.1)';
+        // Overlay extra darkness on top of existing filter via the overlay div approach
+        const overlay = document.getElementById('temp-tint');
+        if (overlay) {
+          const darken = progress * 0.35;
+          overlay.style.background = `rgba(5,5,10,${darken})`;
+        }
+      }
+    });
+  };
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+}
+

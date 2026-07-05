@@ -50,11 +50,19 @@ input { background: none; border: none; outline: none; font-family: inherit; col
   width: 100vw;
   height: 100vh;
 }
-.cinematic-bg img {
+.bg-img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: brightness(0.7) contrast(1.1);
+  opacity: 0;
+  transition: opacity 1s ease, filter 0.5s ease;
+  filter: brightness(0.75) contrast(1.1);
+  will-change: opacity;
+}
+.bg-img.active {
+  opacity: 1;
 }
 .bg-overlay {
   position: absolute;
@@ -598,6 +606,9 @@ button:focus-visible, input:focus-visible, .news-card:focus-visible, .n-filter:f
   background: rgba(167,139,250,0.04);
   animation: lightningPulse 4s ease-in-out infinite;
 }
+.ambience-partly-cloudy {
+  background: linear-gradient(135deg, rgba(251,191,36,0.05) 0%, rgba(148,163,184,0.06) 100%);
+}
 @keyframes rainFall { to { background-position: 0 20px; } }
 @keyframes lightningPulse {
   0%, 95%, 100% { opacity: 0; }
@@ -605,6 +616,17 @@ button:focus-visible, input:focus-visible, .news-card:focus-visible, .n-filter:f
   97% { opacity: 0.3; }
   98% { opacity: 0.8; }
 }
+
+/* ─── Temperature Tint Overlay ─── */
+.temp-tint {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  transition: background 1.5s ease;
+}
+.tint-freezing { background: rgba(100, 160, 255, 0.14); }
+.tint-cold     { background: rgba(120, 170, 240, 0.08); }
+.tint-mild     { background: transparent; }
+.tint-warm     { background: rgba(255, 160, 60, 0.07); }
+.tint-hot      { background: rgba(255, 80, 20, 0.13); }
 
 .condition-icon-wrap.weather-sunny i { animation: sunGlow 3s ease-in-out infinite; }
 .condition-icon-wrap.weather-cloudy i { animation: cloudFloat 4s ease-in-out infinite; }
@@ -655,6 +677,195 @@ button:focus-visible, input:focus-visible, .news-card:focus-visible, .n-filter:f
 .news-sentinel { height: 1px; width: 100%; }
 
 .error-toast[data-type="success"] i { color: #4ade80; }
+
+/* ─── Section Rift — Cinematic Scroll Transition ─── */
+.section-rift {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  z-index: 9;
+}
+
+/* Top + bottom fade to blend with adjacent sections */
+.rift-bg-fade {
+  flex-shrink: 0;
+  height: 60px;
+}
+.rift-fade-top {
+  background: linear-gradient(180deg, transparent 0%, rgba(5,5,10,0.92) 100%);
+}
+.rift-fade-bot {
+  background: linear-gradient(180deg, rgba(5,5,10,0.92) 0%, rgba(10,12,20,0.98) 100%);
+}
+
+/* Middle active zone */
+.rift-core {
+  flex: 1;
+  position: relative;
+  background: rgba(5,5,10,0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The glowing beam lines */
+.rift-beam {
+  position: absolute;
+  left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(248,113,113,0.0) 10%,
+    rgba(251,191,36,0.7) 35%,
+    rgba(255,255,255,0.95) 50%,
+    rgba(251,191,36,0.7) 65%,
+    rgba(248,113,113,0.0) 90%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 6px rgba(251,191,36,0.6),
+    0 0 20px rgba(251,191,36,0.3),
+    0 0 60px rgba(248,113,113,0.15);
+  animation: beamPulse 2.8s ease-in-out infinite;
+}
+.rift-beam-delay {
+  animation-delay: 1.4s;
+  opacity: 0.45;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(56,189,248,0.0) 10%,
+    rgba(56,189,248,0.6) 35%,
+    rgba(255,255,255,0.8) 50%,
+    rgba(56,189,248,0.6) 65%,
+    rgba(56,189,248,0.0) 90%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 6px rgba(56,189,248,0.5),
+    0 0 20px rgba(56,189,248,0.25),
+    0 0 50px rgba(56,189,248,0.1);
+}
+
+@keyframes beamPulse {
+  0%, 100% { opacity: 0.6; transform: scaleX(0.96); }
+  50%       { opacity: 1;   transform: scaleX(1); }
+}
+
+/* Centre label */
+.rift-label {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 28px;
+  border: 1px solid rgba(251,191,36,0.25);
+  border-radius: 3px;
+  background: rgba(5,5,10,0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 0 30px rgba(251,191,36,0.08), inset 0 0 20px rgba(251,191,36,0.04);
+  animation: labelGlow 3s ease-in-out infinite;
+}
+.rift-label-text {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, rgba(251,191,36,0.9), #fff 50%, rgba(251,191,36,0.9));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.rift-dot {
+  width: 4px; height: 4px; border-radius: 50%;
+  background: rgba(251,191,36,0.8);
+  box-shadow: 0 0 6px rgba(251,191,36,0.8);
+  animation: dotPulse 2.8s ease-in-out infinite;
+}
+@keyframes labelGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(251,191,36,0.06), inset 0 0 16px rgba(251,191,36,0.03); border-color: rgba(251,191,36,0.2); }
+  50%       { box-shadow: 0 0 40px rgba(251,191,36,0.18), inset 0 0 24px rgba(251,191,36,0.08); border-color: rgba(251,191,36,0.45); }
+}
+@keyframes dotPulse {
+  0%, 100% { transform: scale(0.8); opacity: 0.6; }
+  50%       { transform: scale(1.3); opacity: 1; }
+}
+
+/* Floating spark particles */
+.rift-particles { position: absolute; inset: 0; pointer-events: none; }
+.rp {
+  position: absolute;
+  width: 2px; height: 2px;
+  border-radius: 50%;
+  background: rgba(251,191,36,0.9);
+  box-shadow: 0 0 4px rgba(251,191,36,0.8);
+  animation: sparkFloat 4s ease-in-out infinite;
+}
+.rp-1 { left: 15%;  bottom: 20%; animation-delay: 0s;    animation-duration: 3.2s; }
+.rp-2 { left: 30%;  bottom: 10%; animation-delay: 0.8s;  animation-duration: 4.1s; background: rgba(56,189,248,0.9); box-shadow: 0 0 4px rgba(56,189,248,0.8); }
+.rp-3 { left: 55%;  bottom: 25%; animation-delay: 0.4s;  animation-duration: 3.7s; }
+.rp-4 { left: 70%;  bottom: 15%; animation-delay: 1.2s;  animation-duration: 4.4s; background: rgba(248,113,113,0.9); box-shadow: 0 0 4px rgba(248,113,113,0.8); }
+.rp-5 { left: 82%;  bottom: 20%; animation-delay: 0.6s;  animation-duration: 3.5s; }
+.rp-6 { left: 45%;  bottom: 30%; animation-delay: 1.6s;  animation-duration: 5s;   background: rgba(56,189,248,0.8); box-shadow: 0 0 4px rgba(56,189,248,0.7); }
+
+@keyframes sparkFloat {
+  0%   { transform: translateY(0)   scale(1);   opacity: 0; }
+  15%  { opacity: 1; }
+  85%  { opacity: 0.8; }
+  100% { transform: translateY(-40px) scale(0.4); opacity: 0; }
+}
+
+/* ─── News Section Scroll-Reveal ─── */
+.news-view {
+  /* Entrance state before IntersectionObserver fires */
+  transform: translateY(0);
+  transition: none;
+}
+.news-view.news-pre-reveal .n-header,
+.news-view.news-pre-reveal .n-filters {
+  opacity: 0;
+  transform: translateY(24px);
+}
+.news-view.news-pre-reveal .n-header h2 {
+  clip-path: inset(0 100% 0 0);
+}
+.news-view.news-revealed .n-header {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.news-view.news-revealed .n-header h2 {
+  clip-path: inset(0 0% 0 0);
+  transition: clip-path 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.news-view.news-revealed .n-filters {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.5s ease 0.2s, transform 0.5s ease 0.2s;
+}
+
+/* Flash overlay that fires once when crossing the rift */
+.rift-flash {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(251,191,36,0.06);
+  pointer-events: none;
+  opacity: 0;
+}
+.rift-flash.fire {
+  animation: riftFlash 0.6s ease-out forwards;
+}
+@keyframes riftFlash {
+  0%   { opacity: 0; }
+  20%  { opacity: 1; }
+  100% { opacity: 0; }
+}
 
 /* ─── Back to Top ─── */
 .back-to-top {
