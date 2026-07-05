@@ -1,37 +1,38 @@
 /** WeatherWise — UI-only dashboard shell */
 
 import { getWeatherFixture } from './weather.js';
-import { getNewsFixture, getTickerHeadlines } from './news.js';
 import {
   showLoader, showToast, showSuccessToast, updateConnectionStatus,
-  initClock, renderWeather, renderTicker, renderFeatured,
-  renderNewsGrid, renderNewsSkeleton, updateFilterButtons,
+  initClock, renderWeather,
+  renderNewsSkeleton, updateFilterButtons,
   initBackToTop, setWeatherRefreshing,
 } from './ui.js';
 import { initSearch } from './search.js';
 import { prefersReducedMotion } from './utils.js';
 import { getAutomaticLocation } from './location.js';
+import { loadAndRenderNews, setNewsLocation } from './newsapi.js';
 
 let currentCategory = 'all';
 
 function loadWeather(city) {
   const data = getWeatherFixture(city);
   renderWeather(data);
+  // Location change hone par news location bhi update karna
+  setNewsLocation(data.location.city, data.location.country);
   return data;
 }
 
-function loadNews({ category = 'all' } = {}) {
+// NewsAPI se news load karna — async function
+async function loadNews({ category = 'all' } = {}) {
   renderNewsSkeleton();
-  const { articles } = getNewsFixture({ category });
-  renderNewsGrid(articles, { append: false, animate: true });
-  renderTicker(getTickerHeadlines(articles));
-  renderFeatured(articles[0]);
   updateFilterButtons(category);
   currentCategory = category;
+  await loadAndRenderNews(category);
 }
 
 function handleSearch(city, done) {
-  loadWeather(city);
+  loadWeather(city); // loadWeather already calls setNewsLocation internally
+  loadNews({ category: currentCategory });
   showSuccessToast(`Weather updated for ${city}`);
   done?.();
 }
@@ -101,12 +102,12 @@ function init() {
     if (select) {
       select.value = 'all';
     }
-    loadNews({ category: 'all' });
 
     setWeatherRefreshing(true);
     try {
       const location = await getAutomaticLocation();
-      loadWeather(location.city);
+      loadWeather(location.city); // setNewsLocation called inside loadWeather
+      await loadNews({ category: 'all' });
       showSuccessToast(`Location updated to ${location.city}`);
     } catch (err) {
       showToast('Could not determine location.');
@@ -120,9 +121,9 @@ function init() {
   updateConnectionStatus({ online: true, health: 'healthy' });
 
   showLoader(true);
-  setTimeout(() => {
+  setTimeout(async () => {
     loadWeather('Brooklyn');
-    loadNews({ category: 'all' });
+    await loadNews({ category: 'all' });
     showLoader(false);
 
     if (!prefersReducedMotion()) {
