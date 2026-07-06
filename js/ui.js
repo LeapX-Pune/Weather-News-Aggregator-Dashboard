@@ -530,45 +530,28 @@ export function initSectionRift() {
   if (prefersReducedMotion()) return;
 
   const newsSection = document.querySelector('.news-view');
-  const rift = document.getElementById('section-rift');
-  if (!newsSection || !rift) return;
-
-  // Build the one-shot flash overlay
-  const flash = document.createElement('div');
-  flash.className = 'rift-flash';
-  document.body.appendChild(flash);
+  if (!newsSection) return;
 
   // Pre-reveal state — hide header until we animate it in
   newsSection.classList.add('news-pre-reveal');
 
   let hasRevealed = false;
 
-  // Observer for the NEWS section entering the viewport
+  // Reveal the news header with a sweep animation when the sheet enters the viewport
   const revealObserver = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (entry.isIntersecting && !hasRevealed) {
         hasRevealed = true;
-
-        // Fire the golden flash
-        flash.classList.add('fire');
-        flash.addEventListener('animationend', () => {
-          flash.classList.remove('fire');
-        }, { once: true });
-
-        // Reveal the news header
         newsSection.classList.remove('news-pre-reveal');
         newsSection.classList.add('news-revealed');
-
         revealObserver.disconnect();
       }
     });
-  }, { threshold: 0.08 });
+  }, { threshold: 0.06 });
 
   revealObserver.observe(newsSection);
 
-  // Parallax: dim/blur the cinematic bg as user scrolls toward news
-  const bgA = document.getElementById('bg-img-a');
-  const bgB = document.getElementById('bg-img-b');
+  // Scroll parallax: progressively darken the hero as news sheet slides up
   const heroEl = document.querySelector('.hero-view');
   if (!heroEl) return;
 
@@ -579,21 +562,15 @@ export function initSectionRift() {
       rafId = null;
       const heroBottom = heroEl.getBoundingClientRect().bottom;
       const vh = window.innerHeight;
-      // progress: 0 when hero bottom is at screen bottom, 1 when it reaches screen top
+      // 0 = hero fully in view, 1 = hero fully scrolled past
       const progress = Math.max(0, Math.min(1, 1 - heroBottom / vh));
-      const activeImg = document.querySelector('.bg-img.active');
-      if (activeImg) {
-        const baseFilter = activeImg.style.filter || 'brightness(0.75) contrast(1.1)';
-        // Overlay extra darkness on top of existing filter via the overlay div approach
-        const overlay = document.getElementById('temp-tint');
-        if (overlay) {
-          const darken = progress * 0.35;
-          overlay.style.background = `rgba(5,5,10,${darken})`;
-        }
+      const overlay = document.getElementById('temp-tint');
+      if (overlay) {
+        // Override temp-tint background while scrolling to add darkness
+        overlay.style.background = `rgba(5,5,10,${(progress * 0.45).toFixed(3)})`;
       }
     });
   };
 
   window.addEventListener('scroll', onScroll, { passive: true });
 }
-
