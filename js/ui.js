@@ -195,6 +195,22 @@ function renderForecast(days) {
         <span class="w-temp${activeClass}"${tempStyle}>${Math.round(day.temp)}&deg;</span>
       </div>`;
   }).join('');
+
+  // Dynamically synchronize SVG highlight markers with the active forecast column position
+  const activeIndex = days.findIndex((d) => d.active);
+  if (activeIndex !== -1) {
+    const xCoords = [0, 166, 333, 500, 666, 833, 1000];
+    const activeX = xCoords[activeIndex] !== undefined ? xCoords[activeIndex] : 500;
+    const svgLine = document.querySelector('.wave-svg line');
+    const svgCircle = document.querySelector('.wave-svg circle');
+    if (svgLine) {
+      svgLine.setAttribute('x1', activeX);
+      svgLine.setAttribute('x2', activeX);
+    }
+    if (svgCircle) {
+      svgCircle.setAttribute('cx', activeX);
+    }
+  }
 }
 
 export function renderTicker(headlines) {

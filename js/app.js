@@ -5,7 +5,7 @@ import {
   showLoader, showToast, showSuccessToast, updateConnectionStatus,
   initClock, renderWeather, renderNewsSkeleton, updateFilterButtons,
   initBackToTop, setWeatherRefreshing,
-} from './ui.js';
+} from './ui.js?v=4';
 import { initSearch } from './search.js';
 import { prefersReducedMotion } from './utils.js';
 import { getAutomaticLocation, getManualLocation } from './location.js';

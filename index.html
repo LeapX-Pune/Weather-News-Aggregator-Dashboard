@@ -72,7 +72,7 @@
                     <i class="ph ph-warning-circle" aria-hidden="true"></i>
                 </div>
                 <div class="s-main">
-                    <span class="s-val" id="wind-value"><i class="ph ph-wind" style="font-size: 24px; vertical-align: middle;" aria-hidden="true"></i> 24 km/h</span>
+                    <span class="s-val" id="wind-value"><i class="ph ph-wind" aria-hidden="true"></i> 24 km/h</span>
                     <p class="s-desc" id="wind-desc">Dangerous winds</p>
                     <div class="s-graph">
                         <svg viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
@@ -98,12 +98,7 @@
                 </div>
             </div>
             
-            <div class="condition-display" style="margin-top: 16px; text-align: center; color: var(--text-dim); font-weight: 300; font-size: 14px;">
-                <div id="condition-icon" class="condition-icon-wrap weather-sunny">
-                    <i class="ph-fill ph-sun" style="font-size: 32px; color: #fbbf24;" aria-hidden="true"></i>
-                </div>
-                Current Condition
-            </div>
+
         </aside>
 
         <!-- CENTER STAGE CONTENT -->
@@ -112,10 +107,10 @@
             <!-- TOP HEADER -->
             <header class="top-header">
                 <div class="location-pin">
-                    <i class="ph-fill ph-map-pin" aria-hidden="true"></i>
                     <div class="location-info">
                         <span id="greeting-text" class="greeting-text">Good Morning</span>
                         <div class="location-row">
+                            <i class="ph-fill ph-map-pin" aria-hidden="true"></i>
                             <span id="location-name">Brooklyn, New York, USA</span>
                             <span class="date" id="location-date">( Friday, January 4 )</span>
                         </div>
@@ -158,13 +153,16 @@
                     <div class="t-huge" id="current-temp" aria-label="Current temperature">28&deg;</div>
                     <div class="t-pills">
                         <div class="t-pill"><span>H</span> <span id="temp-high">32&deg;</span></div>
-                        <div class="t-pill" style="opacity: 0.6;"><span>L</span> <span id="temp-low">19&deg;</span></div>
+                        <div class="t-pill"><span>L</span> <span id="temp-low">19&deg;</span></div>
                     </div>
                 </div>
                 <div class="condition-huge">
+                    <div id="condition-icon" class="condition-icon-wrap weather-sunny">
+                        <i class="ph-fill ph-sun" aria-hidden="true"></i>
+                    </div>
                     <h1>
-                        <span id="condition-title" style="color: #fbbf24; text-shadow: 0 0 40px rgba(251,191,36,0.3);">Sunny</span><br>
-                        <span id="condition-desc" style="color: #ffffff;">clear skies</span>
+                        <span id="condition-title">Sunny</span><br>
+                        <span id="condition-desc">clear skies</span>
                     </h1>
                 </div>
             </section>
@@ -199,8 +197,8 @@
             <section class="wave-forecast" aria-label="7-day forecast">
                 <svg class="wave-svg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
                     <path d="M0,80 Q100,80 166,60 T333,50 T500,40 T666,20 T833,50 T1000,70" />
-                    <line x1="666" y1="20" x2="666" y2="100" />
-                    <circle cx="666" cy="20" r="4" class="dot-glow" />
+                    <line x1="500" y1="20" x2="500" y2="100" />
+                    <circle cx="500" cy="20" r="4" class="dot-glow" />
                 </svg>
                 
                 <div class="wave-days" id="wave-days">
@@ -227,6 +225,10 @@
                     <div class="w-day-col">
                         <span class="w-name">Friday</span>
                         <span class="w-temp" style="margin-top: 35px;">25&deg;</span>
+                    </div>
+                    <div class="w-day-col">
+                        <span class="w-name">Saturday</span>
+                        <span class="w-temp" style="margin-top: 30px;">27&deg;</span>
                     </div>
                 </div>
             </section>
@@ -454,6 +456,6 @@
     </div>
 
     <script src="js/feedback.js"></script>
-    <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/app.js?v=4"></script>
 </body>
 </html>
