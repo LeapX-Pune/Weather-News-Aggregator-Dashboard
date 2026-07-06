@@ -169,24 +169,28 @@ input { background: none; border: none; outline: none; font-family: inherit; col
 
 /* Top Header */
 .top-header {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
   align-items: flex-start;
-  margin-bottom: 40px; /* 8px system spacing */
-  gap: 16px;
+  margin-bottom: 32px; /* Standardized 32px rhythm offset */
+  gap: 16px 24px; /* Standardized 8px spacing rhythm grid */
 }
 .location-pin {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 16px;
-  font-weight: 400;
+  grid-column: 1;
+  grid-row: 1 / span 2;
 }
-.location-pin i { font-size: 20px; }
+.location-row i {
+  font-size: 18px;
+  color: var(--text-dim);
+  align-self: center; /* Natural baseline flex alignment */
+}
 .location-pin .date { color: var(--text-dark); margin-left: 8px; }
 
 .top-actions {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -194,21 +198,28 @@ input { background: none; border: none; outline: none; font-family: inherit; col
 .btn-icon {
   width: 44px; height: 44px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.1);
+  background: var(--glass-bg);
   backdrop-filter: blur(10px);
   display: flex; align-items: center; justify-content: center;
   font-size: 20px; border: 1px solid var(--glass-border);
-  transition: background 0.3s;
+  transition: background 0.3s, border-color 0.3s, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-main);
 }
-.btn-icon:hover { background: rgba(255,255,255,0.2); }
+.btn-icon:hover {
+  background: var(--glass-bg-heavy);
+  border-color: var(--glass-border-bright);
+}
+.btn-icon:active {
+  transform: scale(0.97); /* Subdued active button press animation */
+}
 .btn-outline {
   padding: 10px 24px;
   border-radius: 30px;
-  border: 1px solid rgba(255,255,255,0.3);
+  border: 1px solid var(--glass-border);
   font-size: 14px; font-weight: 400;
   transition: background 0.3s;
 }
-.btn-outline:hover { background: rgba(255,255,255,0.1); }
+.btn-outline:hover { background: var(--glass-border); }
 
 /* Center Stage Typography */
 .center-stage {
@@ -597,48 +608,67 @@ button:focus-visible, input:focus-visible, .news-card:focus-visible, .n-filter:f
 .greeting-text { font-size: 13px; color: var(--text-dark); font-weight: 300; }
 .live-clock { font-size: 13px; color: var(--text-dim); font-weight: 400; font-variant-numeric: tabular-nums; }
 .header-meta {
-  display: flex; flex-wrap: wrap; gap: 16px; width: 100%;
-  order: 3;
+  display: flex;
+  gap: 16px;
+  width: auto;
 }
-.meta-text { font-size: 12px; color: var(--text-dark); font-weight: 300; }
+.meta-text { font-size: 12px; color: rgba(255, 255, 255, 0.55); font-weight: 400; } /* Improved readability contrast */
 
 /* ─── Search Bar ─── */
-.search-wrapper { position: relative; }
+.search-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+  max-width: 320px; /* Fluid width boundaries on desktop */
+}
 .search-bar {
-  background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border);
-  border-radius: 30px; padding: 10px 16px; display: flex; align-items: center;
-  gap: 10px; backdrop-filter: blur(10px); transition: border-color 0.2s ease;
+  background: var(--glass-bg); border: 1px solid var(--glass-border);
+  border-radius: 22px; padding: 10px 16px; display: flex; align-items: center;
+  gap: 8px; backdrop-filter: blur(10px); height: 44px; /* Standardized 8px gap */
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.search-bar:focus-within {
+  border-color: var(--glass-border-bright);
+  box-shadow: var(--shadow-glow);
 }
 .search-bar input {
-  background: transparent; border: none; color: white;
-  width: 200px; outline: none; font-family: inherit; font-size: 14px;
+  background: transparent; border: none; color: var(--text-main);
+  width: 100%; outline: none; font-family: inherit; font-size: 14px;
   min-width: 0; flex: 1;
 }
 .search-bar input.is-invalid { color: #fca5a5; }
 .search-bar input::placeholder { color: var(--text-dark); }
-.search-icon { font-size: 18px; flex-shrink: 0; }
+.search-icon { font-size: 18px; flex-shrink: 0; color: var(--text-dim); }
 .search-clear {
   display: none; width: 28px; height: 28px; border-radius: 50%;
   align-items: center; justify-content: center; font-size: 14px;
   transition: opacity 0.2s, transform 0.15s;
+  color: var(--text-dim);
 }
 .search-clear.visible { display: flex; }
-.search-clear:hover { background: rgba(255,255,255,0.1); }
+.search-clear:hover { background: var(--glass-border); }
 .search-btn {
   width: 32px; height: 32px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(255,255,255,0.1); font-size: 16px;
+  background: var(--glass-border); font-size: 16px;
+  color: var(--text-main);
   transition: background 0.2s, transform 0.15s; flex-shrink: 0;
 }
-.search-btn:hover { background: rgba(255,255,255,0.2); }
-.search-btn:active { transform: scale(0.93); }
+.search-btn:hover { background: var(--glass-border-bright); }
+.search-btn:active { transform: scale(0.97); } /* Subdued active button press animation */
 .search-spinner {
-  display: none; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.1);
-  border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite;
+  display: none; width: 18px; height: 18px; border: 2px solid var(--glass-border);
+  border-top-color: var(--text-main); border-radius: 50%; animation: spin 0.8s linear infinite;
   flex-shrink: 0;
 }
 .search-wrapper.is-loading .search-spinner { display: block; }
 .search-wrapper.is-loading .search-btn { display: none; }
+
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translateY(-4px); } /* Reduced animation offset to 4px */
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .search-dropdown {
   position: absolute; top: calc(100% + 8px); right: 0; left: 0;
   background: var(--glass-bg-heavy); backdrop-filter: blur(24px);
@@ -646,12 +676,19 @@ button:focus-visible, input:focus-visible, .news-card:focus-visible, .n-filter:f
   padding: 8px; z-index: 100; max-height: 240px; overflow-y: auto;
   box-shadow: var(--shadow-deep);
 }
+.search-dropdown:not([hidden]) {
+  animation: dropdownFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 .search-suggestion {
-  display: block; width: 100%; text-align: left; padding: 10px 14px;
+  display: block; width: 100%; text-align: left; padding: 12px 14px; /* Expanded touch target vertical padding */
   border-radius: 10px; font-size: 14px; font-weight: 300;
   transition: background 0.15s;
+  color: var(--text-main);
 }
-.search-suggestion:hover, .search-suggestion:focus-visible { background: rgba(255,255,255,0.1); }
+.search-suggestion:hover, .search-suggestion:focus-visible {
+  background: var(--glass-border);
+  outline: none;
+}
 .search-clear-history {
   display: block; width: 100%; text-align: center; padding: 8px;
   font-size: 12px; color: var(--text-dark); margin-top: 4px;
@@ -793,8 +830,25 @@ button:focus-visible, input:focus-visible, .news-card:focus-visible, .n-filter:f
 
 /* ─── 1024px Laptop ─── */
 @media (max-width: 1024px) {
-  .top-header { flex-wrap: wrap; gap: 20px; }
-  .header-meta { margin-top: 0; order: 3; }
+  .top-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  .location-pin {
+    width: 100%;
+  }
+  .top-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .header-meta {
+    width: 100%;
+    margin-top: 0;
+    order: 3;
+  }
   .search-bar input { width: 160px; }
 }
 
@@ -804,9 +858,9 @@ button:focus-visible, input:focus-visible, .news-card:focus-visible, .n-filter:f
   .news-view { padding: 40px 20px; }
   .n-header { flex-direction: column; align-items: flex-start; gap: 20px; }
   .n-filters { flex-wrap: wrap; }
-  .top-header { margin-bottom: 40px; }
+  .top-header { margin-bottom: 32px; }
   .top-actions { width: 100%; flex-wrap: wrap; justify-content: flex-end; }
-  .search-wrapper { flex: 1; min-width: 100%; order: 3; }
+  .search-wrapper { flex: 1; min-width: 100%; max-width: none; order: 3; }
   .search-bar { width: 100%; }
   .search-bar input { width: 100%; }
   .t-huge { font-size: 100px; }
