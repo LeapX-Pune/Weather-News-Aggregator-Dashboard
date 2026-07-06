@@ -154,15 +154,17 @@ function generateWeatherData(locationKey, coords) {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const today = new Date().getDay();
 
-  const forecast = days.map((name, i) => {
-    const offset = (i - today + 7) % 7;
-    const dayIndex = (today + offset) % 7;
+  // Wave curve offsets: today (i=0) is at the top, rest curve naturally
+  const waveOffsets = [0, 15, 28, 38, 30, 20, 10];
+
+  const forecast = Array.from({ length: 7 }, (_, i) => {
+    const dayIndex = (today + i) % 7;
     const temp = baseTemp + ((seed + i * 3) % 8) - 3;
     return {
       day: days[dayIndex],
       temp,
-      active: offset === 3,
-      offsetY: [40, 30, 25, 0, 20, 35, 30][offset] || 20,
+      active: i === 0,  // today is always first and active
+      offsetY: waveOffsets[i] ?? 20,
     };
   });
 

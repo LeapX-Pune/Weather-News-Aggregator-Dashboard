@@ -320,13 +320,15 @@ function renderForecast(days) {
     const colStyle = day.active ? ' style="transform: translateY(-20px);"' : '';
     const nameStyle = day.active ? ' style="color: #ffffff; font-weight: 500;"' : '';
     const tempStyle = day.active ? '' : ` style="margin-top: ${day.offsetY}px;"`;
+    const label = day.active ? 'Today' : sanitize(day.day);
     return `
       <div class="w-day-col${activeClass}"${colStyle}>
-        <span class="w-name"${nameStyle}>${sanitize(day.day)}</span>
+        <span class="w-name"${nameStyle}>${label}</span>
         <span class="w-temp${activeClass}"${tempStyle}>${Math.round(day.temp)}&deg;</span>
       </div>`;
   }).join('');
 }
+
 
 export function renderTicker(headlines) {
   const wrapper = document.querySelector('.ticker-wrapper');
