@@ -1,7 +1,8 @@
 /** City search — dropdown, validation, keyboard, in-memory history */
 
 import { debounce, cleanAndValidateQuery } from './utils.js';
-import { getCitySuggestions, validateCity } from './weather.js';
+import { getCitySuggestions } from './weather.js';
+import { getCityAutocomplete } from './location.js';
 
 const searchHistory = [];
 const MAX_HISTORY = 8;
@@ -67,31 +68,25 @@ export function initSearch({ onSearch, onInvalid }) {
       return;
     }
 
-    const valid = validateCity(trimmed);
-    if (!valid) {
-      input.classList.add('is-invalid');
-      input.setAttribute('aria-invalid', 'true');
-      onInvalid?.('Location not found. Try: Mumbai, Pune, Delhi, London, Tokyo\u2026');
-      return;
-    }
-
     input.classList.remove('is-invalid');
     input.setAttribute('aria-invalid', 'false');
-    addSearchHistory(`${valid.city}, ${valid.region}`);
+    addSearchHistory(trimmed);
     hideDropdown();
     setLoading(true);
-    onSearch(valid.city, () => setLoading(false));
+    onSearch(trimmed, () => setLoading(false));
   }
 
-  const debouncedSuggest = debounce((query) => {
+  const debouncedSuggest = debounce(async (query) => {
     const trimmed = cleanAndValidateQuery(query);
     if (trimmed === null) {
       showDropdown([...searchHistory]);
       return;
     }
-    const suggestions = getCitySuggestions(trimmed);
-    showDropdown(suggestions.length ? suggestions : [...searchHistory]);
-  }, 250);
+    const local = getCitySuggestions(trimmed);
+    const api = await getCityAutocomplete(trimmed);
+    const merged = [...new Set([...local, ...api])];
+    showDropdown(merged.length ? merged : [...searchHistory]);
+  }, 300);
 
   input.addEventListener('input', () => {
     input.classList.remove('is-invalid');
@@ -100,9 +95,16 @@ export function initSearch({ onSearch, onInvalid }) {
     debouncedSuggest(input.value);
   });
 
-  input.addEventListener('focus', () => {
+  input.addEventListener('focus', async () => {
     const trimmed = cleanAndValidateQuery(input.value);
-    showDropdown(trimmed ? getCitySuggestions(trimmed) : [...searchHistory]);
+    if (trimmed) {
+      const local = getCitySuggestions(trimmed);
+      const api = await getCityAutocomplete(trimmed);
+      const merged = [...new Set([...local, ...api])];
+      showDropdown(merged);
+    } else {
+      showDropdown([...searchHistory]);
+    }
   });
 
   input.addEventListener('keydown', (e) => {
