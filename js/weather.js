@@ -362,13 +362,13 @@ export async function getWeatherData(opts) {
         const dayName = new Date(ad.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' });
         forecast.push({
           day: dayName,
-          temp: Math.round((ad.day.maxtemp_c + ad.day.mintemp_c) / 2),
+          temp: Math.round(ad.day.avgtemp_c),
           active: i === 0,
           offsetY: [40, 30, 25, 0, 20, 35, 30][i] || 20,
         });
       } else {
         const last = apiDays[apiDays.length - 1];
-        const avg = (last.day.maxtemp_c + last.day.mintemp_c) / 2;
+        const avg = last.day.avgtemp_c;
         forecast.push({
           day: dayNames[dayIndex],
           temp: Math.round(avg + (i - apiDays.length + 1) * 2),
