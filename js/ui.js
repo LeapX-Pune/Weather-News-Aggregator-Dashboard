@@ -102,6 +102,10 @@ export function updateConnectionStatus({ online, health }) {
   }
 }
 
+/**
+ * Initializes the realtime clock on the dashboard hero section.
+ * Calculates date and time using localized formatting.
+ */
 export function initClock() {
   const clockEl = document.getElementById('live-clock');
   const dateEl = document.getElementById('location-date');
