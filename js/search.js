@@ -38,6 +38,10 @@ function clearSearchHistory() {
  * @param {Function} config.onInvalid - Callback executed upon an invalid or empty submission.
  * @returns {Object} Public API methods to interface with the search component.
  */
+/**
+ * Initializes the search bar functionality, binds keyboard events, and sets up autocompletion.
+ * @param {Object} callbacks - Contains callbacks like `onSearch` and `onInvalid`.
+ */
 export function initSearch({ onSearch, onInvalid }) {
   const input = document.getElementById('city-search');
   const dropdown = document.getElementById('search-dropdown');
