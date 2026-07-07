@@ -64,6 +64,38 @@ const API_CATEGORY_LABEL = {
   breaking:      'general',
 };
 
+// ============================================================================
+// PULAK'S WORK: SEARCH LOGIC (STRICT CLIENT-SIDE FILTERING)
+// ============================================================================
+const CATEGORY_KEYWORDS = {
+  technology:    ['tech', 'software', 'app', 'apple', 'google', 'microsoft', 'ai', 'cyber', 'data', 'internet', 'computer', 'digital', 'startup', 'innovation'],
+  business:      ['market', 'stock', 'economy', 'trade', 'finance', 'business', 'company', 'ceo', 'profit', 'bank', 'invest', 'revenue', 'corporate'],
+  sports:        ['sport', 'football', 'cricket', 'basketball', 'tennis', 'game', 'match', 'tournament', 'champion', 'player', 'team', 'league', 'cup'],
+  health:        ['health', 'hospital', 'doctor', 'patient', 'disease', 'virus', 'vaccine', 'medicine', 'medical', 'treatment', 'drug', 'clinic', 'fitness'],
+  entertainment: ['movie', 'film', 'music', 'actor', 'actress', 'hollywood', 'bollywood', 'celebrity', 'star', 'theater', 'show', 'cinema', 'song'],
+};
+
+/**
+ * Ensures that live API results strictly match the selected category
+ * by scanning the raw title and description against a robust keyword dictionary.
+ */
+function filterByCategory(articles, category) {
+  if (category === 'all' || category === 'general') return articles;
+  
+  const keywords = CATEGORY_KEYWORDS[category];
+  if (!keywords) return articles;
+
+  const filtered = articles.filter(a => {
+    const text = ((a.title || '') + ' ' + (a.description || '')).toLowerCase();
+    return keywords.some(kw => text.includes(kw));
+  });
+
+  return filtered.length > 0 ? filtered : articles;
+}
+// ============================================================================
+// END PULAK'S WORK
+// ============================================================================
+
 // ─── Per-category unique fallback images ─────────────────────────────────────
 // Each category has multiple images — randomly picked so same-category cards
 // never show the same static image twice in a row
@@ -432,8 +464,11 @@ export async function getNewsData(category = 'all') {
   const rawArticles = await fetchFromNewsData(city, category);
 
   if (rawArticles) {
+    // Perform strict client-side keyword filtering
+    const filteredRaw = filterByCategory(rawArticles, category);
+
     // Real API data — each article gets its own correct category + image
-    const articles = rawArticles.map((raw, i) => mapArticle(raw, i));
+    const articles = filteredRaw.map((raw, i) => mapArticle(raw, i));
     return { articles, source: 'api' };
   }
 
