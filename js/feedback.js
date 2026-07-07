@@ -793,7 +793,7 @@ const FeedbackManager = (function() {
     let debugMode = false;
 
     function log(msg, data = '') {
-        // if (debugMode) console.log(`[FeedbackManager] ${msg}`, data);
+        // Logging removed for production
     }
     
     function warn(msg, data = '') {

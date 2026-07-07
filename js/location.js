@@ -253,7 +253,7 @@ function getMockLocation(cityName) {
 }
 
 export async function getAutomaticLocation() {
-  // console.log('Location Service: Requesting browser geolocation...');
+  // Requesting browser geolocation...
 
   if (!navigator.geolocation) {
     console.warn('Location Service: Geolocation not supported. Using mock location.');
@@ -264,7 +264,7 @@ export async function getAutomaticLocation() {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-        // console.log(`Location Service: Found coordinates (${latitude}, ${longitude})`);
+        // Found coordinates
 
         const key = getApiKey();
         if (!key) {
