@@ -52,6 +52,14 @@ function getLazyObserver() {
   return _lazyObserver;
 }
 
+/** Reset lazy observer — call before rendering new grid so stale entries are cleared */
+export function resetLazyObserver() {
+  if (_lazyObserver) {
+    _lazyObserver.disconnect();
+    _lazyObserver = null;
+  }
+}
+
 export function showLoader(show = true) {
   const loader = document.getElementById('app-loader');
   if (loader) loader.classList.toggle('active', show);
