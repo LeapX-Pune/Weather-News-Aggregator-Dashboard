@@ -240,7 +240,7 @@ export function renderFeatured(article) {
 
   card.innerHTML = `
     <div style="width: 90px; height: 90px; border-radius: 16px; overflow: hidden; flex-shrink: 0;">
-      <img src="${imgSrc}" style="width: 100%; height: 100%; object-fit: cover;" alt="" loading="lazy" decoding="async"
+      <img src="${imgSrc}" style="width: 100%; height: 100%; object-fit: cover;" alt="${sanitize(article.title) || 'Featured news'}" loading="lazy" decoding="async"
         onerror="this.onerror=null;this.src='${fallbackSrc}'">
     </div>
     <div style="display: flex; flex-direction: column; justify-content: center;">
@@ -250,8 +250,15 @@ export function renderFeatured(article) {
     </div>`;
   card.dataset.articleId = article.id;
   const articleUrl = article.url || article.link || '#';
-  card.onclick = () => {
+  const openArticle = () => {
     if (articleUrl && articleUrl !== '#') window.open(articleUrl, '_blank', 'noopener');
+  };
+  card.onclick = openArticle;
+  card.onkeydown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openArticle();
+    }
   };
 }
 
