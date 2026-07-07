@@ -14,6 +14,12 @@ import { loadAndRenderNews, setNewsLocation } from './newsapi.js';
 let currentCategory = 'all';
 let currentLocation = null;
 
+/**
+ * Loads weather data for a given location and updates the UI.
+ * @async
+ * @param {string|Object} location - The city name or coordinates object {lat, lon, city}.
+ * @returns {Promise<Object>} The fetched weather data object.
+ */
 async function loadWeather(location) {
   const opts = typeof location === 'string' ? { city: location }
     : { city: location.city || 'Brooklyn', lat: location.lat, lon: location.lon };

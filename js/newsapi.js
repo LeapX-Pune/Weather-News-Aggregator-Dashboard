@@ -455,6 +455,12 @@ async function fetchFromNewsData(city, category = 'all') {
  * Har city change pe fallback counters reset hote hain
  * @param {string} category
  */
+/**
+ * Fetches news data using primary or fallback sources, depending on availability.
+ * @async
+ * @param {string} [category='all'] - The news category to fetch.
+ * @returns {Promise<Array>} An array of formatted article objects.
+ */
 export async function getNewsData(category = 'all') {
   const { city, country } = getNewsLocation();
 
