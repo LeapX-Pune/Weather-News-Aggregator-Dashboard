@@ -1,8 +1,9 @@
 /** DOM rendering — updates existing UI without redesign */
 
 import { formatDate, formatClock, formatRelativeTime, getGreeting, isRecentArticle, sanitize, prefersReducedMotion } from './utils.js';
-import { getReadArticles, markArticleRead } from './storage.js';
 import { getArticleFallbackImage } from './news.js';
+
+const readArticles = new Set();
 
 const ICON_MAP = {
   sunny: { icon: 'ph-fill ph-sun', color: '#fbbf24' },
@@ -22,6 +23,7 @@ const AMBIENCE_MAP = {
 
 let clockInterval = null;
 
+ feature/cinematic-weather-news-dashboard
 // ─── Cinematic Background System ───
 const BG_IMAGES = {
   sunny: {
@@ -167,21 +169,24 @@ function updateCinematicBackground(icon, temp) {
     nextImg.onload = null;
     onLoaded();
   }
+
+let _bgImg = null;
+function getBgImg() {
+  if (!_bgImg) _bgImg = document.querySelector('.cinematic-bg img');
+  return _bgImg;
+ develop
 }
 
-// Singleton lazy-image IntersectionObserver — created once, reused across renders
 let _lazyObserver = null;
 function getLazyObserver() {
   if (_lazyObserver) return _lazyObserver;
   if (!('IntersectionObserver' in window)) return null;
-
   _lazyObserver = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (entry.isIntersecting) {
         const img = entry.target;
         img.addEventListener('load', () => img.classList.add('loaded'), { once: true });
         img.addEventListener('error', () => {
-          // Fallback: use category fallback if image fails to load
           const card = img.closest('[data-category]');
           const category = card?.dataset.category || 'default';
           img.src = getArticleFallbackImage(category);
@@ -192,8 +197,15 @@ function getLazyObserver() {
       }
     });
   }, { rootMargin: '150px' });
-
   return _lazyObserver;
+}
+
+/** Reset lazy observer — call before rendering new grid so stale entries are cleared */
+export function resetLazyObserver() {
+  if (_lazyObserver) {
+    _lazyObserver.disconnect();
+    _lazyObserver = null;
+  }
 }
 
 export function showLoader(show = true) {
@@ -208,7 +220,6 @@ export function showToast(message, type = 'error') {
   const span = toast.querySelector('span');
   const icon = toast.querySelector('i');
   if (span) span.textContent = message;
-  // Fix: update icon class based on toast type (was always showing error icon)
   if (icon) {
     icon.className = type === 'success'
       ? 'ph-fill ph-check-circle'
@@ -272,6 +283,10 @@ export function renderWeather(data) {
   const lastUpdated = document.getElementById('weather-last-updated');
   const syncTime = document.getElementById('sync-timestamp');
   const ambience = document.getElementById('weather-ambience');
+ feature/cinematic-weather-news-dashboard
+
+  const bgImg = getBgImg();
+ develop
 
   if (loc) loc.textContent = data.location.display;
   if (temp) temp.innerHTML = `${Math.round(data.current.temp)}&deg;`;
@@ -306,7 +321,24 @@ export function renderWeather(data) {
     ambience.classList.add(AMBIENCE_MAP[data.current.icon] || 'ambience-sunny');
   }
 
+ feature/cinematic-weather-news-dashboard
   updateCinematicBackground(data.current.icon, data.current.temp);
+
+  if (bgImg && !prefersReducedMotion()) {
+    if (!bgImg.dataset.transitionSet) {
+      bgImg.style.transition = 'filter 0.5s ease';
+      bgImg.dataset.transitionSet = '1';
+    }
+    const filters = {
+      sunny: 'brightness(0.75) contrast(1.1) sepia(0.1)',
+      cloudy: 'brightness(0.6) contrast(1.05) saturate(0.8)',
+      rainy: 'brightness(0.5) contrast(1.1) saturate(0.7)',
+      thunderstorm: 'brightness(0.45) contrast(1.2) saturate(0.6)',
+      'partly-cloudy': 'brightness(0.65) contrast(1.05)',
+    };
+    bgImg.style.filter = filters[data.current.icon] || filters.sunny;
+  }
+ develop
 
   renderForecast(data.forecast);
 }
@@ -327,6 +359,22 @@ function renderForecast(days) {
         <span class="w-temp${activeClass}"${tempStyle}>${Math.round(day.temp)}&deg;</span>
       </div>`;
   }).join('');
+
+  // Dynamically synchronize SVG highlight markers with the active forecast column position
+  const activeIndex = days.findIndex((d) => d.active);
+  if (activeIndex !== -1) {
+    const xCoords = [0, 166, 333, 500, 666, 833, 1000];
+    const activeX = xCoords[activeIndex] !== undefined ? xCoords[activeIndex] : 500;
+    const svgLine = document.querySelector('.wave-svg line');
+    const svgCircle = document.querySelector('.wave-svg circle');
+    if (svgLine) {
+      svgLine.setAttribute('x1', activeX);
+      svgLine.setAttribute('x2', activeX);
+    }
+    if (svgCircle) {
+      svgCircle.setAttribute('cx', activeX);
+    }
+  }
 }
 
 
@@ -335,7 +383,7 @@ export function renderTicker(headlines) {
   if (!wrapper || !headlines.length) return;
 
   wrapper.innerHTML = headlines.map((text, i) =>
-    `<h4 class="ticker-item t-${i + 1}" role="marquee">${sanitize(text)}</h4>`
+    `<h4 class="ticker-item t-${i + 1}">${sanitize(text)}</h4>`
   ).join('');
   wrapper.setAttribute('aria-live', 'polite');
 }
@@ -344,7 +392,6 @@ export function renderFeatured(article) {
   const card = document.getElementById('featured-news');
   if (!card || !article) return;
 
-  // Ensure fallback image — never empty src
   const imgSrc = article.image || getArticleFallbackImage(article.category);
   const fallbackSrc = getArticleFallbackImage(article.category || 'default');
 
@@ -359,25 +406,31 @@ export function renderFeatured(article) {
       <span style="font-size: 11px; color: var(--text-dark);">${sanitize(article.source)} &bull; ${formatRelativeTime(article.publishedAt)}</span>
     </div>`;
   card.dataset.articleId = article.id;
+  const articleUrl = article.url || article.link || '#';
+  card.onclick = () => {
+    if (articleUrl && articleUrl !== '#') window.open(articleUrl, '_blank', 'noopener');
+  };
 }
 
 function buildNewsCard(article, readSet) {
-  // readSet is pre-loaded once per batch — no per-card localStorage reads
   const isRead = readSet.has(article.id);
   const isNew = isRecentArticle(article.publishedAt);
   const badges = [
     article.breaking ? '<span class="nc-badge nc-badge-breaking">Breaking News</span>' : '',
     isNew ? '<span class="nc-badge nc-badge-new">New</span>' : '',
+    article.local ? '<span class="nc-badge nc-badge-local">Local</span>' : '',
   ].filter(Boolean).join('');
 
-  // Ensure fallback image — never an empty src attribute
   const imgSrc = article.image || getArticleFallbackImage(article.category);
   const fallbackSrc = getArticleFallbackImage(article.category || 'default');
+
+  // Use article.url if available (real API), otherwise fall back gracefully
+  const articleUrl = article.url || article.link || '#';
 
   return `
     <article class="news-card glass-panel${isRead ? ' is-read' : ''}" data-id="${article.id}" data-category="${article.category}" tabindex="0" role="article" aria-label="${sanitize(article.title)}">
       <div class="nc-img">
-        <img src="${imgSrc}" alt="" loading="lazy" decoding="async" class="nc-img-lazy"
+        <img src="${imgSrc}" alt="${sanitize(article.title)}" loading="lazy" decoding="async" class="nc-img-lazy"
           onerror="this.onerror=null;this.src='${fallbackSrc}'">
         <span class="nc-tag">${sanitize(article.category)}</span>
         ${badges ? `<div class="nc-badges">${badges}</div>` : ''}
@@ -387,8 +440,13 @@ function buildNewsCard(article, readSet) {
         <p>${sanitize(article.excerpt)}</p>
       </div>
       <div class="nc-footer">
-        <span>${sanitize(article.source)}</span>
-        <span>${formatRelativeTime(article.publishedAt)}</span>
+        <div class="nc-meta">
+          <span class="nc-source"><i class="ph ph-newspaper" aria-hidden="true"></i> ${sanitize(article.source)}</span>
+          <span class="nc-time"><i class="ph ph-clock" aria-hidden="true"></i> ${formatRelativeTime(article.publishedAt)}</span>
+        </div>
+        <a href="${articleUrl}" target="_blank" rel="noopener noreferrer" class="nc-read-more" aria-label="Read more: ${sanitize(article.title)}">
+          Read More <i class="ph ph-arrow-right" aria-hidden="true"></i>
+        </a>
       </div>
     </article>`;
 }
@@ -399,9 +457,17 @@ export function renderNewsSkeleton(count = 4) {
   grid.innerHTML = Array.from({ length: count }, () => `
     <div class="news-card glass-panel skeleton-card" aria-hidden="true">
       <div class="skeleton-img skeleton-shimmer"></div>
-      <div class="skeleton-line skeleton-shimmer" style="width: 80%;"></div>
-      <div class="skeleton-line skeleton-shimmer" style="width: 100%;"></div>
-      <div class="skeleton-line skeleton-shimmer" style="width: 60%;"></div>
+      <div class="skeleton-body">
+        <div class="skeleton-tag skeleton-shimmer"></div>
+        <div class="skeleton-line skeleton-shimmer" style="width: 90%;"></div>
+        <div class="skeleton-line skeleton-shimmer" style="width: 70%;"></div>
+        <div class="skeleton-line skeleton-shimmer" style="width: 100%;"></div>
+        <div class="skeleton-line skeleton-shimmer" style="width: 85%;"></div>
+        <div class="skeleton-footer">
+          <div class="skeleton-line skeleton-shimmer" style="width: 40%;"></div>
+          <div class="skeleton-line skeleton-shimmer" style="width: 25%;"></div>
+        </div>
+      </div>
     </div>`).join('');
 }
 
@@ -409,10 +475,36 @@ export function renderNewsGrid(articles, { append = false, animate = true } = {}
   const grid = document.getElementById('news-grid');
   if (!grid) return;
 
-  // Read localStorage ONCE for the entire batch — not 12 separate reads
-  const readSet = new Set(getReadArticles());
+  const sentinel = document.getElementById('news-sentinel');
+  if (sentinel && !sentinel.dataset.wired) {
+    sentinel.dataset.wired = 'true';
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting) {
+          const endMsg = sentinel.querySelector('.sentinel-end');
+          if (!endMsg) {
+            const msg = document.createElement('div');
+            msg.className = 'sentinel-end';
+            msg.textContent = 'All articles loaded';
+            msg.style.cssText = 'text-align:center;padding:32px;color:var(--text-dark);font-size:13px;font-weight:300;';
+            sentinel.appendChild(msg);
+          }
+        }
+      }, { rootMargin: '100px' }).observe(sentinel);
+    }
+  }
 
-  const html = articles.map((a) => buildNewsCard(a, readSet)).join('');
+  if (!articles || articles.length === 0) {
+    grid.innerHTML = `
+      <div class="news-empty" role="status" aria-live="polite">
+        <i class="ph ph-newspaper" aria-hidden="true"></i>
+        <h3>No articles available</h3>
+        <p>Try selecting a different category or check back later.</p>
+      </div>`;
+    return;
+  }
+
+  const html = articles.map((a) => buildNewsCard(a, readArticles)).join('');
 
   if (append) {
     grid.insertAdjacentHTML('beforeend', html);
@@ -434,7 +526,7 @@ function bindNewsCardEvents(grid) {
   grid.querySelectorAll('.news-card:not([data-bound])').forEach((card) => {
     card.dataset.bound = 'true';
     card.addEventListener('click', () => {
-      markArticleRead(card.dataset.id);
+      readArticles.add(card.dataset.id);
       card.classList.add('is-read');
     });
     card.addEventListener('keydown', (e) => {
@@ -446,12 +538,13 @@ function bindNewsCardEvents(grid) {
   });
 }
 
+export { readArticles };
+
 function observeLazyImages(container) {
   const observer = getLazyObserver();
   const images = container.querySelectorAll('.nc-img-lazy:not(.loaded)');
 
   if (!observer) {
-    // Fallback for browsers without IntersectionObserver
     images.forEach((img) => {
       img.classList.add('loaded');
       img.addEventListener('error', () => {
@@ -473,6 +566,11 @@ export function updateFilterButtons(activeCategory) {
     btn.classList.toggle('active', isActive);
     btn.setAttribute('aria-pressed', String(isActive));
   });
+
+  const select = document.getElementById('news-category-select');
+  if (select) {
+    select.value = activeCategory;
+  }
 }
 
 export function initBackToTop() {
@@ -484,39 +582,6 @@ export function initBackToTop() {
   btn.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
   });
-}
-
-export function initPullToRefresh(onRefresh) {
-  let startY = 0;
-  let pulling = false;
-  const indicator = document.getElementById('pull-refresh');
-  if (!indicator) return;
-
-  document.addEventListener('touchstart', (e) => {
-    if (window.scrollY === 0) {
-      startY = e.touches[0].clientY;
-      pulling = true;
-    }
-  }, { passive: true });
-
-  document.addEventListener('touchmove', (e) => {
-    if (!pulling || window.scrollY > 0) return;
-    const diff = e.touches[0].clientY - startY;
-    if (diff > 0 && diff < 120) {
-      indicator.style.transform = `translateY(${Math.min(diff, 80)}px)`;
-      indicator.classList.add('active');
-    }
-  }, { passive: true });
-
-  document.addEventListener('touchend', async () => {
-    if (!pulling) return;
-    pulling = false;
-    const transform = indicator.style.transform;
-    const pulled = parseInt(transform.replace(/\D/g, ''), 10) || 0;
-    indicator.style.transform = '';
-    indicator.classList.remove('active');
-    if (pulled > 60) await onRefresh?.();
-  }, { passive: true });
 }
 
 export function setWeatherRefreshing(isRefreshing) {

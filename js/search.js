@@ -1,9 +1,43 @@
-/** Premium city search — debounce, history, validation, keyboard */
+/** City search — dropdown, validation, keyboard, in-memory history */
 
-import { debounce } from './utils.js';
-import { getSearchHistory, addSearchHistory, clearSearchHistory } from './storage.js';
-import { getCitySuggestions, validateCity } from './weather.js';
+import { debounce, cleanAndValidateQuery } from './utils.js';
+import { getCitySuggestions } from './weather.js';
+import { getCityAutocomplete } from './location.js';
 
+// ============================================================================
+// PULAK'S WORK: SEARCH LOGIC & HISTORY
+// ============================================================================
+
+/**
+ * Manages the search history stack.
+ * Ensures recent searches are maintained without exceeding the maximum history limit.
+ */
+const searchHistory = [];
+const MAX_HISTORY = 8;
+
+function addSearchHistory(city) {
+  const normalized = city.trim();
+  if (!normalized) return;
+  const filtered = searchHistory.filter((h) => h.toLowerCase() !== normalized.toLowerCase());
+  searchHistory.length = 0;
+  searchHistory.push(normalized, ...filtered);
+  if (searchHistory.length > MAX_HISTORY) searchHistory.length = MAX_HISTORY;
+}
+
+function clearSearchHistory() {
+  searchHistory.length = 0;
+}
+
+/**
+ * Initializes the search component by binding event listeners to the search input,
+ * form submission, and dropdown interactions. It manages rendering search suggestions,
+ * handling debounce timing, and controlling the loading state.
+ *
+ * @param {Object} config - Configuration object containing callback functions.
+ * @param {Function} config.onSearch - Callback executed upon a valid search submission.
+ * @param {Function} config.onInvalid - Callback executed upon an invalid or empty submission.
+ * @returns {Object} Public API methods to interface with the search component.
+ */
 export function initSearch({ onSearch, onInvalid }) {
   const input = document.getElementById('city-search');
   const dropdown = document.getElementById('search-dropdown');
@@ -14,7 +48,6 @@ export function initSearch({ onSearch, onInvalid }) {
   if (!input) return {};
 
   let isSearching = false;
-  // Track document click listener so we add it only once
   let _docClickBound = false;
 
   function setLoading(loading) {
@@ -35,7 +68,6 @@ export function initSearch({ onSearch, onInvalid }) {
     dropdown.hidden = false;
     input.setAttribute('aria-expanded', 'true');
 
-    // Show items with clear history button only when items exist
     dropdown.innerHTML = items.map((city) =>
       `<button type="button" class="search-suggestion" role="option" data-city="${city}">${city}</button>`
     ).join('') +
@@ -48,38 +80,31 @@ export function initSearch({ onSearch, onInvalid }) {
   }
 
   function performSearch(query) {
-    const trimmed = query.trim();
-    if (!trimmed) {
+    const trimmed = cleanAndValidateQuery(query);
+    if (trimmed === null) {
       onInvalid?.('Please enter a city name.');
-      return;
-    }
-
-    const valid = validateCity(trimmed);
-    if (!valid) {
-      input.classList.add('is-invalid');
-      input.setAttribute('aria-invalid', 'true');
-      onInvalid?.('Location not found. Try: Mumbai, Pune, Delhi, London, Tokyo…');
       return;
     }
 
     input.classList.remove('is-invalid');
     input.setAttribute('aria-invalid', 'false');
-    addSearchHistory(`${valid.city}, ${valid.region}`);
+    addSearchHistory(trimmed);
     hideDropdown();
     setLoading(true);
-    onSearch(valid.city, () => setLoading(false));
+    onSearch(trimmed, () => setLoading(false));
   }
 
-  // Improved: searches both city name and history simultaneously
-  const debouncedSuggest = debounce((query) => {
-    if (!query.trim()) {
-      showDropdown(getSearchHistory());
+  const debouncedSuggest = debounce(async (query) => {
+    const trimmed = cleanAndValidateQuery(query);
+    if (trimmed === null) {
+      showDropdown([...searchHistory]);
       return;
     }
-    const suggestions = getCitySuggestions(query);
-    // Show suggestions; if empty, show history as fallback
-    showDropdown(suggestions.length ? suggestions : getSearchHistory());
-  }, 250);
+    const local = getCitySuggestions(trimmed);
+    const api = await getCityAutocomplete(trimmed);
+    const merged = [...new Set([...local, ...api])];
+    showDropdown(merged.length ? merged : [...searchHistory]);
+  }, 300);
 
   input.addEventListener('input', () => {
     input.classList.remove('is-invalid');
@@ -88,16 +113,19 @@ export function initSearch({ onSearch, onInvalid }) {
     debouncedSuggest(input.value);
   });
 
-  input.addEventListener('focus', () => {
-    const val = input.value.trim();
-    showDropdown(val ? getCitySuggestions(val) : getSearchHistory());
+  input.addEventListener('focus', async () => {
+    const trimmed = cleanAndValidateQuery(input.value);
+    if (trimmed) {
+      const local = getCitySuggestions(trimmed);
+      const api = await getCityAutocomplete(trimmed);
+      const merged = [...new Set([...local, ...api])];
+      showDropdown(merged);
+    } else {
+      showDropdown([...searchHistory]);
+    }
   });
 
   input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      performSearch(input.value);
-    }
     if (e.key === 'Escape') {
       input.value = '';
       input.classList.remove('is-invalid');
@@ -111,7 +139,10 @@ export function initSearch({ onSearch, onInvalid }) {
     }
   });
 
-  searchBtn?.addEventListener('click', () => performSearch(input.value));
+  wrapper?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    performSearch(input.value);
+  });
 
   clearBtn?.addEventListener('click', () => {
     input.value = '';
@@ -134,7 +165,6 @@ export function initSearch({ onSearch, onInvalid }) {
     }
   });
 
-  // Guard: add document click listener only once
   if (!_docClickBound) {
     _docClickBound = true;
     document.addEventListener('click', (e) => {
@@ -146,8 +176,7 @@ export function initSearch({ onSearch, onInvalid }) {
     setLoading,
     focus: () => {
       input.focus();
-      // Show search history on "/" shortcut focus
-      if (!input.value.trim()) showDropdown(getSearchHistory());
+      if (!input.value.trim()) showDropdown([...searchHistory]);
     },
     clear: () => {
       input.value = '';
@@ -157,3 +186,6 @@ export function initSearch({ onSearch, onInvalid }) {
     isSearching: () => isSearching,
   };
 }
+// ============================================================================
+// END PULAK'S WORK
+// ============================================================================
