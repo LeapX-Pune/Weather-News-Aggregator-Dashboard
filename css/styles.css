@@ -510,8 +510,7 @@ input { background: none; border: none; outline: none; font-family: inherit; col
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
-  transition: background-color var(--motion-normal) var(--ease-standard), border-color var(--motion-normal) var(--ease-standard), color var(--motion-normal) var(--ease-standard);
-  transition: background 0.25s, color 0.25s, border-color 0.25s, transform 0.15s;
+  transition: background-color var(--motion-normal) var(--ease-standard), border-color var(--motion-normal) var(--ease-standard), transform var(--motion-normal) var(--ease-standard);
   white-space: nowrap;
   line-height: 1;
 }
@@ -545,8 +544,7 @@ input { background: none; border: none; outline: none; font-family: inherit; col
   display: flex;
   flex-direction: column;
   border-radius: 24px;
-  transition: transform var(--motion-normal) var(--ease-standard), background var(--motion-normal) var(--ease-standard);
-  will-change: transform, opacity;
+  transition: transform var(--motion-normal) var(--ease-standard), background-color var(--motion-normal) var(--ease-standard);
   /* CSS containment: browser can skip layout/paint for off-screen cards */
   overflow: hidden;
   padding: 0;
@@ -667,7 +665,7 @@ input { background: none; border: none; outline: none; font-family: inherit; col
   font-weight: 400;
   font-family: inherit;
   text-decoration: none;
-  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  transition: background-color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard), transform var(--motion-fast) var(--ease-standard);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -680,7 +678,7 @@ input { background: none; border: none; outline: none; font-family: inherit; col
   outline: 2px solid rgba(255,255,255,0.8);
   outline-offset: 2px;
 }
-.nc-read-more i { font-size: 12px; transition: transform 0.2s; }
+.nc-read-more i { font-size: 12px; transition: transform var(--motion-fast) var(--ease-standard); }
 .nc-read-more:hover i { transform: translateX(3px); }
 
 /* Read state */
@@ -691,7 +689,7 @@ input { background: none; border: none; outline: none; font-family: inherit; col
 }
 
 /* Lazy image fade-in */
-.nc-img-lazy { opacity: 0; transition: opacity 0.35s ease; }
+.nc-img-lazy { opacity: 0; transition: opacity var(--motion-normal) var(--ease-standard); }
 .nc-img-lazy.loaded { opacity: 1; }
 
 /* Breaking / New badges */
@@ -1034,7 +1032,7 @@ button,
 .connection-status {
   position: fixed; top: 16px; right: 16px; z-index: 2500;
   width: 10px; height: 10px; border-radius: 50%;
-  transition: background var(--motion-normal) var(--ease-standard), box-shadow var(--motion-normal) var(--ease-standard);
+  transition: background-color var(--motion-normal) var(--ease-standard);
 }
 .connection-status.status-healthy { background: #4ade80; box-shadow: 0 0 8px rgba(74,222,128,0.5); }
 .connection-status.status-degraded { background: #fbbf24; box-shadow: 0 0 8px rgba(251,191,36,0.5); }
@@ -1107,7 +1105,7 @@ button,
 .nc-img-lazy { opacity: 0; transition: opacity var(--motion-normal) var(--ease-standard); }
 .nc-img-lazy.loaded { opacity: 1; }
 
-.news-card { transition: transform var(--motion-normal) var(--ease-standard), background var(--motion-normal) var(--ease-standard), opacity var(--motion-normal) var(--ease-standard); }
+.news-card { transition: transform var(--motion-normal) var(--ease-standard), opacity var(--motion-normal) var(--ease-standard); }
 .card-reveal {
   animation: cardReveal var(--motion-normal) var(--ease-standard) forwards;
   opacity: 0; transform: translateY(12px);
@@ -1125,8 +1123,6 @@ button,
 
 .news-sentinel { height: 1px; width: 100%; }
 .nc-badges { position: absolute; top: 14px; right: 14px; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
-
-.news-card { transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease, opacity 0.2s ease; }
 
 .error-toast[data-type="success"] i { color: #4ade80; }
 
@@ -1302,4 +1298,23 @@ button,
 
 #search-button:hover {
   background: #2c3e55;
+}
+
+/* ─── Rendering Performance Optimizations ─── */
+
+/* 1. Remove nested backdrop-filters under the already-blurred .news-view */
+.news-view .glass-panel,
+.news-view .news-card,
+.news-view .nc-tag,
+.news-view .n-filter {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* 2. Optimize default news card shadow by reducing blur radius from 50px to 12px */
+.news-view .news-card {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35) !important;
+}
+.news-view .news-card:hover {
+  box-shadow: var(--shadow-glow) !important;
 }
