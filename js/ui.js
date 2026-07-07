@@ -203,6 +203,22 @@ function renderForecast(days) {
         <span class="w-temp${activeClass}"${tempStyle}>${Math.round(day.temp)}&deg;</span>
       </div>`;
   }).join('');
+
+  // Dynamically synchronize SVG highlight markers with the active forecast column position
+  const activeIndex = days.findIndex((d) => d.active);
+  if (activeIndex !== -1) {
+    const xCoords = [0, 166, 333, 500, 666, 833, 1000];
+    const activeX = xCoords[activeIndex] !== undefined ? xCoords[activeIndex] : 500;
+    const svgLine = document.querySelector('.wave-svg line');
+    const svgCircle = document.querySelector('.wave-svg circle');
+    if (svgLine) {
+      svgLine.setAttribute('x1', activeX);
+      svgLine.setAttribute('x2', activeX);
+    }
+    if (svgCircle) {
+      svgCircle.setAttribute('cx', activeX);
+    }
+  }
 }
 
 export function renderTicker(headlines) {
@@ -233,6 +249,10 @@ export function renderFeatured(article) {
       <span style="font-size: 11px; color: var(--text-dark);">${sanitize(article.source)} &bull; ${formatRelativeTime(article.publishedAt)}</span>
     </div>`;
   card.dataset.articleId = article.id;
+  const articleUrl = article.url || article.link || '#';
+  card.onclick = () => {
+    if (articleUrl && articleUrl !== '#') window.open(articleUrl, '_blank', 'noopener');
+  };
 }
 
 function buildNewsCard(article, readSet) {
@@ -241,6 +261,7 @@ function buildNewsCard(article, readSet) {
   const badges = [
     article.breaking ? '<span class="nc-badge nc-badge-breaking">Breaking News</span>' : '',
     isNew ? '<span class="nc-badge nc-badge-new">New</span>' : '',
+    article.local ? '<span class="nc-badge nc-badge-local">Local</span>' : '',
   ].filter(Boolean).join('');
 
   const imgSrc = article.image || getArticleFallbackImage(article.category);
@@ -297,8 +318,24 @@ export function renderNewsGrid(articles, { append = false, animate = true } = {}
   const grid = document.getElementById('news-grid');
   if (!grid) return;
 
-  // Reset lazy observer so stale DOM nodes from previous city don't linger
-  if (!append) resetLazyObserver();
+  const sentinel = document.getElementById('news-sentinel');
+  if (sentinel && !sentinel.dataset.wired) {
+    sentinel.dataset.wired = 'true';
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting) {
+          const endMsg = sentinel.querySelector('.sentinel-end');
+          if (!endMsg) {
+            const msg = document.createElement('div');
+            msg.className = 'sentinel-end';
+            msg.textContent = 'All articles loaded';
+            msg.style.cssText = 'text-align:center;padding:32px;color:var(--text-dark);font-size:13px;font-weight:300;';
+            sentinel.appendChild(msg);
+          }
+        }
+      }, { rootMargin: '100px' }).observe(sentinel);
+    }
+  }
 
   if (!articles || articles.length === 0) {
     grid.innerHTML = `
