@@ -1,5 +1,16 @@
 /** Shared utilities — debounce, formatting, time helpers */
 
+// ============================================================================
+// PULAK'S WORK: SEARCH LOGIC & HISTORY
+// ============================================================================
+/**
+ * Limits the rate at which a function can fire.
+ * Useful for delaying search query execution until the user pauses typing.
+ *
+ * @param {Function} fn - The function to debounce.
+ * @param {number} delay - The delay in milliseconds.
+ * @returns {Function} A debounced version of the provided function.
+ */
 export function debounce(fn, delay = 300) {
   let timer;
   return (...args) => {
@@ -7,6 +18,9 @@ export function debounce(fn, delay = 300) {
     timer = setTimeout(() => fn(...args), delay);
   };
 }
+// ============================================================================
+//END PULAK'S WORK
+// ============================================================================
 
 export function getGreeting() {
   const hour = new Date().getHours();
@@ -51,6 +65,9 @@ export function sanitize(str) {
   return div.innerHTML;
 }
 
+// ============================================================================
+// PULAK'S WORK: SEARCH LOGIC & HISTORY
+// ============================================================================
 /**
  * Trims whitespace from a query string and validates that it is non-empty.
  * Returns the trimmed query if valid, or null if the input is empty or invalid.
@@ -61,4 +78,7 @@ export function cleanAndValidateQuery(query) {
   const trimmed = query.trim();
   return trimmed !== '' ? trimmed : null;
 }
+// ============================================================================
+// END PULAK'S WORK
+// ============================================================================
 
