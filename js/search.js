@@ -4,6 +4,14 @@ import { debounce, cleanAndValidateQuery } from './utils.js';
 import { getCitySuggestions } from './weather.js';
 import { getCityAutocomplete } from './location.js';
 
+// ============================================================================
+// PULAK'S WORK: SEARCH LOGIC & HISTORY
+// ============================================================================
+
+/**
+ * Manages the search history stack.
+ * Ensures recent searches are maintained without exceeding the maximum history limit.
+ */
 const searchHistory = [];
 const MAX_HISTORY = 8;
 
@@ -20,6 +28,16 @@ function clearSearchHistory() {
   searchHistory.length = 0;
 }
 
+/**
+ * Initializes the search component by binding event listeners to the search input,
+ * form submission, and dropdown interactions. It manages rendering search suggestions,
+ * handling debounce timing, and controlling the loading state.
+ *
+ * @param {Object} config - Configuration object containing callback functions.
+ * @param {Function} config.onSearch - Callback executed upon a valid search submission.
+ * @param {Function} config.onInvalid - Callback executed upon an invalid or empty submission.
+ * @returns {Object} Public API methods to interface with the search component.
+ */
 export function initSearch({ onSearch, onInvalid }) {
   const input = document.getElementById('city-search');
   const dropdown = document.getElementById('search-dropdown');
@@ -168,3 +186,6 @@ export function initSearch({ onSearch, onInvalid }) {
     isSearching: () => isSearching,
   };
 }
+// ============================================================================
+// END PULAK'S WORK
+// ============================================================================
