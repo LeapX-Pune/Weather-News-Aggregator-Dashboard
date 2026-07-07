@@ -45,6 +45,28 @@ const CATEGORY_MAP = {
   entertainment: 'entertainment',
 };
 
+const CATEGORY_KEYWORDS = {
+  technology:    ['tech', 'software', 'app', 'apple', 'google', 'microsoft', 'ai', 'cyber', 'data', 'internet', 'computer', 'digital', 'startup', 'innovation'],
+  business:      ['market', 'stock', 'economy', 'trade', 'finance', 'business', 'company', 'ceo', 'profit', 'bank', 'invest', 'revenue', 'corporate'],
+  sports:        ['sport', 'football', 'cricket', 'basketball', 'tennis', 'game', 'match', 'tournament', 'champion', 'player', 'team', 'league', 'cup'],
+  health:        ['health', 'hospital', 'doctor', 'patient', 'disease', 'virus', 'vaccine', 'medicine', 'medical', 'treatment', 'drug', 'clinic', 'fitness'],
+  entertainment: ['movie', 'film', 'music', 'actor', 'actress', 'hollywood', 'bollywood', 'celebrity', 'star', 'theater', 'show', 'cinema', 'song'],
+};
+
+function filterByCategory(articles, category) {
+  if (category === 'all' || category === 'general') return articles;
+  
+  const keywords = CATEGORY_KEYWORDS[category];
+  if (!keywords) return articles;
+
+  const filtered = articles.filter(a => {
+    const text = ((a.title || '') + ' ' + (a.description || '')).toLowerCase();
+    return keywords.some(kw => text.includes(kw));
+  });
+
+  return filtered.length > 0 ? filtered : articles;
+}
+
 // ─── Fallback Images ──────────────────────────────────────────────────────────
 
 const CATEGORY_FALLBACK_IMAGES = {
@@ -385,7 +407,11 @@ export async function getNewsData(category = 'all') {
   if (rawArticles) {
     // Real API data — real articles, real URLs, Read More sahi jagah jaayega
     const apiCategory = CATEGORY_MAP[category] || 'general';
-    const articles = rawArticles.map((raw, i) => mapArticle(raw, i, apiCategory));
+    
+    // Perform client-side keyword filtering
+    const filteredRaw = filterByCategory(rawArticles, apiCategory);
+
+    const articles = filteredRaw.map((raw, i) => mapArticle(raw, i, apiCategory));
     return { articles, source: 'api' };
   }
 
