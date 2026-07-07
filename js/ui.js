@@ -52,6 +52,14 @@ function getLazyObserver() {
   return _lazyObserver;
 }
 
+/** Reset lazy observer — call before rendering new grid so stale entries are cleared */
+export function resetLazyObserver() {
+  if (_lazyObserver) {
+    _lazyObserver.disconnect();
+    _lazyObserver = null;
+  }
+}
+
 export function showLoader(show = true) {
   const loader = document.getElementById('app-loader');
   if (loader) loader.classList.toggle('active', show);
@@ -288,6 +296,9 @@ export function renderNewsSkeleton(count = 4) {
 export function renderNewsGrid(articles, { append = false, animate = true } = {}) {
   const grid = document.getElementById('news-grid');
   if (!grid) return;
+
+  // Reset lazy observer so stale DOM nodes from previous city don't linger
+  if (!append) resetLazyObserver();
 
   if (!articles || articles.length === 0) {
     grid.innerHTML = `

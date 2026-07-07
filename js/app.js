@@ -30,9 +30,9 @@ async function loadNews({ category = 'all' } = {}) {
   await loadAndRenderNews(category);
 }
 
-function handleSearch(city, done) {
-  loadWeather(city); // loadWeather already calls setNewsLocation internally
-  loadNews({ category: currentCategory });
+async function handleSearch(city, done) {
+  loadWeather(city);                          // setNewsLocation called inside
+  await loadNews({ category: currentCategory }); // fetch with new location
   showSuccessToast(`Weather updated for ${city}`);
   done?.();
 }
