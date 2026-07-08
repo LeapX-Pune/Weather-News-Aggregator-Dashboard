@@ -161,7 +161,7 @@ const VALID_CITIES = {
   brooklyn: { city: 'Brooklyn', region: 'New York', country: 'USA', lat: 40.6782, lon: -73.9442 },
   'new york': { city: 'New York', region: 'New York', country: 'USA', lat: 40.7128, lon: -74.006 },
   nyc: { city: 'New York', region: 'New York', country: 'USA', lat: 40.7128, lon: -74.006 },
-  'los angeles': { city: 'Los Angeles', region: 'New York', country: 'USA', lat: 34.0522, lon: -118.2437 },
+  'los angeles': { city: 'Los Angeles', region: 'California', country: 'USA', lat: 34.0522, lon: -118.2437 },
   chicago: { city: 'Chicago', region: 'Illinois', country: 'USA', lat: 41.8781, lon: -87.6298 },
   houston: { city: 'Houston', region: 'Texas', country: 'USA', lat: 29.7604, lon: -95.3698 },
   phoenix: { city: 'Phoenix', region: 'Arizona', country: 'USA', lat: 33.4484, lon: -112.0740 },

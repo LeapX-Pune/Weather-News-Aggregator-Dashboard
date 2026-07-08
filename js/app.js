@@ -5,7 +5,7 @@ import {
   showLoader, showToast, showSuccessToast, updateConnectionStatus,
   initClock, renderWeather, renderNewsSkeleton, updateFilterButtons,
   initBackToTop, setWeatherRefreshing,
-} from './ui.js?v=4';
+} from './ui.js';
 import { initSearch } from './search.js';
 import { prefersReducedMotion } from './utils.js';
 import { getAutomaticLocation, getManualLocation } from './location.js';
@@ -36,16 +36,6 @@ async function refreshApp(location) {
   await loadNews({ category: currentCategory });
 }
 
-// ============================================================================
-// PULAK'S WORK: SEARCH LOGIC & HISTORY
-// ============================================================================
-/**
- * Handles the successful submission of a search query by resolving the location
- * and refreshing the application state with new weather data.
- *
- * @param {string} city - The validated city name to search for.
- * @param {Function} done - Callback to execute once the search is complete.
- */
 async function handleSearch(city, done) {
   try {
     const location = await getManualLocation(city);
@@ -58,48 +48,18 @@ async function handleSearch(city, done) {
   }
 }
 
-/**
- * Handles invalid search submissions by displaying an error notification.
- *
- * @param {string} msg - The error message to display.
- */
 function handleInvalidSearch(msg) {
   showToast(msg);
 }
-// ============================================================================
-// END PULAK'S WORK
-// ============================================================================
 
-// ============================================================================
-// PULAK'S WORK: FILTER LOGIC
-// ============================================================================
-/**
- * Initializes event listeners for the news category selection dropdown.
- * Upon selection change, it updates the application state to load articles
- * matching the selected category.
- */
 function initCategoryFilters() {
-  const select = document.getElementById('news-category-select');
-  select?.addEventListener('change', (e) => {
-    const category = e.target.value || 'all';
-    loadNews({ category });
-  });
-
   document.querySelectorAll('.n-filter[data-category]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const category = btn.dataset.category || 'all';
-      if (select) {
-        select.value = category;
-        select.dispatchEvent(new Event('change'));
-      } else {
-        loadNews({ category });
-      }
+      loadNews({ category });
     });
   });
 }
-// ============================================================================
-// END PULAK'S WORK
-// ============================================================================
 
 function initKeyboardShortcuts() {
   document.addEventListener('keydown', (e) => {
@@ -139,22 +99,9 @@ function init() {
     }
   });
 
-// ============================================================================
-  // PULAK'S WORK: SEARCH LOGIC & HISTORY
-  // ============================================================================
-  /**
-   * Resets active search and filter states when the geolocation button is triggered.
-   * This ensures that manually entered queries or category filters are cleared 
-   * before applying the automatically detected location.
-   */
   document.getElementById('geolocate-btn')?.addEventListener('click', async () => {
     searchApi?.clear();
-
-    const select = document.getElementById('news-category-select');
-    if (select) {
-      select.value = 'all';
-      currentCategory = 'all';
-    }
+    currentCategory = 'all';
 
     setWeatherRefreshing(true);
     try {
@@ -167,9 +114,6 @@ function init() {
       setWeatherRefreshing(false);
     }
   });
-  // ============================================================================
-  // END PULAK'S WORK
-  // ============================================================================
 
   searchApi = initSearch({ onSearch: handleSearch, onInvalid: handleInvalidSearch });
 

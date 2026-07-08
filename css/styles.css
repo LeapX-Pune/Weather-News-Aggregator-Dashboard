@@ -235,9 +235,9 @@ input { background: none; border: none; outline: none; font-family: inherit; col
 .center-stage {
   display: flex;
   flex-direction: column;
-  gap: 12px; /* Tighten visual hero grouping */
-  margin-top: auto; /* Vertically center weather hero stage */
-  margin-bottom: 32px; /* Close spacing to weekly forecast */
+  gap: 12px;
+  margin-top: auto;
+  margin-bottom: 24px;
 }
 .temp-row {
   display: flex;
@@ -368,7 +368,7 @@ input { background: none; border: none; outline: none; font-family: inherit; col
 /* Bottom Wave Forecast */
 .wave-forecast {
   width: 100%;
-  margin-top: 16px; /* Group closely with weather hero stage */
+  margin-top: 8px;
   position: relative;
   padding-bottom: 16px;
 }
@@ -421,28 +421,30 @@ input { background: none; border: none; outline: none; font-family: inherit; col
 /* The SVG Wave */
 .wave-svg {
   position: absolute;
-  top: 40px;
-  left: 40px; /* Offset to center of first column */
-  width: calc(100% - 80px); /* Span to center of last column */
+  top: 0;
+  left: 40px;
+  width: calc(100% - 80px);
   height: 100px;
   z-index: 1;
   overflow: visible;
+  pointer-events: none;
 }
 .wave-svg path {
   fill: none;
-  stroke: var(--glass-border-bright); /* Adopting design system variables */
-  stroke-width: 1.5; /* Thinner vector line */
-  opacity: 0.2; /* Subdued visual weight to keep it in background */
+  stroke: #38bdf8;
+  stroke-width: 2.5;
+  opacity: 0.8;
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.4));
 }
 .wave-svg .dot-glow {
-  fill: var(--text-main); /* Adopting design system variables */
-  filter: drop-shadow(0 0 6px var(--glass-border-bright));
-  opacity: 0.8;
+  fill: #38bdf8;
+  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.6));
+  opacity: 1;
 }
 .wave-svg line {
-  stroke: var(--glass-border); /* Adopting design system variables */
+  stroke: #38bdf8;
   stroke-dasharray: 4 4;
-  opacity: 0.15; /* Soft tracking line opacity */
+  opacity: 0.5;
 }
 
 /* ─── Scroll Down: News Section ─── */
@@ -481,10 +483,6 @@ input { background: none; border: none; outline: none; font-family: inherit; col
   letter-spacing: 0.1px;
 }
 .n-header h2 { font-size: 40px; font-weight: 300; letter-spacing: -1px; }
-.n-filters { display: flex; gap: 12px; }
-.n-filter { padding: 8px 20px; border-radius: 20px; border: 1px solid var(--glass-border); font-size: 14px; transition: background var(--motion-normal) var(--ease-standard), border-color var(--motion-normal) var(--ease-standard), color var(--motion-normal) var(--ease-standard), transform var(--motion-normal) var(--ease-standard); }
-.n-filter:hover { background: rgba(255,255,255,0.1); }
-.n-filter.active { background: #ffffff; color: #000; font-weight: 500; }
 
 /* ─── Category Filter Pills ─── */
 .n-filters {
@@ -505,12 +503,6 @@ input { background: none; border: none; outline: none; font-family: inherit; col
   cursor: pointer;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  transition: background-color var(--motion-normal) var(--ease-standard), border-color var(--motion-normal) var(--ease-standard), color var(--motion-normal) var(--ease-standard);
   transition: background 0.25s, color 0.25s, border-color 0.25s, transform 0.15s;
   white-space: nowrap;
   line-height: 1;
@@ -866,7 +858,6 @@ input:focus-visible,
 .n-filter:focus-visible,
 .w-day-col:focus-visible,
 .search-suggestion:focus-visible,
-.category-select:focus-visible,
 .btn-icon:focus-visible {
   outline: 2px solid var(--glass-border-bright) !important;
   outline-offset: 2px;
@@ -877,8 +868,7 @@ input:focus-visible,
 .n-filter:active,
 .news-card:active,
 .w-day-col:active,
-.search-btn:active,
-.category-select:active {
+.search-btn:active {
   transform: scale(0.97); /* Standardized interaction scale */
 }
 
@@ -919,7 +909,6 @@ button,
 .search-suggestion,
 .search-btn,
 .search-clear,
-.category-select,
 .search-clear-history {
   cursor: pointer;
 }
