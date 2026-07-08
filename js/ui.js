@@ -204,19 +204,39 @@ function renderForecast(days) {
       </div>`;
   }).join('');
 
-  // Dynamically synchronize SVG highlight markers with the active forecast column position
+  const xCoords = [0, 167, 333, 500, 667, 833, 1000];
+  const svgPath = document.querySelector('.wave-svg path');
+  const svgLine = document.querySelector('.wave-svg line');
+  const svgCircle = document.querySelector('.wave-svg circle');
+
+  const points = days.map((day, i) => ({
+    x: xCoords[i],
+    y: 30 + day.offsetY - (day.active ? 24 : 0),
+  }));
+
+  if (svgPath && points.length > 1) {
+    let d = `M${points[0].x},${points[0].y}`;
+    const midX = (points[0].x + points[1].x) / 2;
+    d += ` Q${midX},${points[0].y} ${points[1].x},${points[1].y}`;
+    for (let i = 2; i < points.length; i++) {
+      d += ` T${points[i].x},${points[i].y}`;
+    }
+    svgPath.setAttribute('d', d);
+  }
+
   const activeIndex = days.findIndex((d) => d.active);
   if (activeIndex !== -1) {
-    const xCoords = [0, 166, 333, 500, 666, 833, 1000];
-    const activeX = xCoords[activeIndex] !== undefined ? xCoords[activeIndex] : 500;
-    const svgLine = document.querySelector('.wave-svg line');
-    const svgCircle = document.querySelector('.wave-svg circle');
+    const activeX = xCoords[activeIndex] ?? 500;
+    const activeY = points[activeIndex]?.y ?? 30;
     if (svgLine) {
       svgLine.setAttribute('x1', activeX);
       svgLine.setAttribute('x2', activeX);
+      svgLine.setAttribute('y1', activeY);
+      svgLine.setAttribute('y2', '100');
     }
     if (svgCircle) {
       svgCircle.setAttribute('cx', activeX);
+      svgCircle.setAttribute('cy', activeY);
     }
   }
 }
@@ -409,11 +429,6 @@ export function updateFilterButtons(activeCategory) {
     btn.classList.toggle('active', isActive);
     btn.setAttribute('aria-pressed', String(isActive));
   });
-
-  const select = document.getElementById('news-category-select');
-  if (select) {
-    select.value = activeCategory;
-  }
 }
 
 export function initBackToTop() {

@@ -8,11 +8,7 @@
 const NEWSDATA_API_KEY = 'pub_bb28e833805540278095be60924e2647';
 const NEWSDATA_BASE    = 'https://newsdata.io/api/1/news';
 
-// ─── Imports ──────────────────────────────────────────────────────────────────
-
 import { renderNewsGrid, renderTicker, renderFeatured } from './ui.js';
-
-// ─── Location State ───────────────────────────────────────────────────────────
 
 let _currentCity    = 'Brooklyn';
 let _currentCountry = 'USA';
@@ -64,9 +60,6 @@ const API_CATEGORY_LABEL = {
   breaking:      'general',
 };
 
-// ============================================================================
-// PULAK'S WORK: SEARCH LOGIC (STRICT CLIENT-SIDE FILTERING)
-// ============================================================================
 const CATEGORY_KEYWORDS = {
   technology:    ['tech', 'software', 'app', 'apple', 'google', 'microsoft', 'ai', 'cyber', 'data', 'internet', 'computer', 'digital', 'startup', 'innovation'],
   business:      ['market', 'stock', 'economy', 'trade', 'finance', 'business', 'company', 'ceo', 'profit', 'bank', 'invest', 'revenue', 'corporate'],
@@ -92,9 +85,6 @@ function filterByCategory(articles, category) {
 
   return filtered.length > 0 ? filtered : articles;
 }
-// ============================================================================
-// END PULAK'S WORK
-// ============================================================================
 
 // ─── Per-category unique fallback images ─────────────────────────────────────
 // Each category has multiple images — randomly picked so same-category cards
@@ -144,10 +134,6 @@ const CATEGORY_FALLBACK_POOL = {
 // Per-category counter so each card in same category gets a DIFFERENT placeholder
 const _fallbackCounters = {};
 
-/**
- * Category ke liye unique placeholder image — rotating pool se
- * Baar baar same image nahi aayegi same category mein
- */
 function getUniquePlaceholder(category) {
   const pool = CATEGORY_FALLBACK_POOL[category] || CATEGORY_FALLBACK_POOL.general;
   const count = _fallbackCounters[category] || 0;
@@ -155,7 +141,6 @@ function getUniquePlaceholder(category) {
   return pool[count % pool.length];
 }
 
-/** Reset counters har naye city fetch pe */
 function resetFallbackCounters() {
   Object.keys(_fallbackCounters).forEach((k) => { _fallbackCounters[k] = 0; });
 }
@@ -240,10 +225,6 @@ function isKeySet() {
   );
 }
 
-/**
- * Special characters strip karna
- * São Paulo → Sao Paulo, Zürich → Zurich
- */
 function normalizeCityName(city) {
   return city
     .normalize('NFD')
@@ -317,42 +298,17 @@ function mapArticle(raw, index) {
   };
 }
 
-/** URL-based deduplication */
-function deduplicate(articles) {
-  const seen = new Set();
-  return articles.filter((a) => {
-    if (!a.link || seen.has(a.link)) return false;
-    seen.add(a.link);
-    return true;
-  });
-}
-
-/**
- * Full clean pipeline:
- * 1. Remove API-flagged duplicates
- * 2. Remove articles with no description AND no image (empty cards)
- * 3. Deduplicate by URL
- * 4. Deduplicate by title (first 60 chars) — catches syndicated same-story
- */
 function cleanArticles(articles) {
-  // Step 1 — remove API-flagged duplicates
   const notFlagged = articles.filter((a) => a.duplicate !== true);
-
-  // Step 2 — remove articles that have neither description nor image
   const hasContent = notFlagged.filter(
     (a) => a.title && a.link && (a.description || a.image_url)
   );
-
-  // Step 3 — deduplicate by URL
   const seenUrls = new Set();
   const dedupedByUrl = hasContent.filter((a) => {
     if (seenUrls.has(a.link)) return false;
     seenUrls.add(a.link);
     return true;
   });
-
-  // Step 4 — deduplicate by title prefix (first 55 chars, lowercased)
-  // Catches same story published on multiple outlets with identical headline
   const seenTitles = new Set();
   return dedupedByUrl.filter((a) => {
     const key = (a.title || '').toLowerCase().slice(0, 55).trim();
@@ -362,12 +318,6 @@ function cleanArticles(articles) {
   });
 }
 
-// ─── Fetch Logic ──────────────────────────────────────────────────────────────
-
-/**
- * Primary fetch — qInTitle gives articles where city is IN THE HEADLINE
- * This is the most accurate city-specific news
- */
 async function fetchPrimary(cleanCity, category) {
   const params = new URLSearchParams({
     apikey:   NEWSDATA_API_KEY,
@@ -386,10 +336,6 @@ async function fetchPrimary(cleanCity, category) {
   return cleanArticles(data.results.filter((a) => a.title && a.link));
 }
 
-/**
- * Fallback fetch — broader q= search when qInTitle returns < 3 results
- * Used for smaller/less-covered cities
- */
 async function fetchFallback(cleanCity, category) {
   const params = new URLSearchParams({
     apikey:   NEWSDATA_API_KEY,
@@ -425,10 +371,8 @@ async function fetchFromNewsData(city, category = 'all') {
   const timeoutId  = setTimeout(() => controller.abort(), 10000);
 
   try {
-    // City ka news headline mein dhundna
     let results = await fetchPrimary(cleanCity, category);
 
-    // Agar kam results mile toh broad search karo
     if (!results || results.length < 3) {
       console.info(`[NewsData.io] qInTitle gave ${results?.length ?? 0} for "${cleanCity}", trying q= fallback.`);
       results = await fetchFallback(cleanCity, category);
@@ -448,13 +392,6 @@ async function fetchFromNewsData(city, category = 'all') {
   }
 }
 
-// ─── Main Public Functions ────────────────────────────────────────────────────
-
-/**
- * News data laana — live city API ya location-aware mock fallback
- * Har city change pe fallback counters reset hote hain
- * @param {string} category
- */
 export async function getNewsData(category = 'all') {
   const { city, country } = getNewsLocation();
 
@@ -477,15 +414,10 @@ export async function getNewsData(category = 'all') {
   return { articles: getMockArticles(city, country, category), source: 'mock' };
 }
 
-/** Ticker ke liye top 3 headlines */
 function buildTickerHeadlines(articles) {
   return articles.slice(0, 3).map((a) => `${a.title}...`);
 }
 
-/**
- * Poora news section load aur render karna
- * app.js se sirf yahi call hoga
- */
 export async function loadAndRenderNews(category = 'all') {
   const { articles } = await getNewsData(category);
   renderNewsGrid(articles, { append: false, animate: true });
